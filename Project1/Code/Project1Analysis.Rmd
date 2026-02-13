@@ -13,126 +13,238 @@ library(lmtest)
 library(sandwich)
 
 # Bayesian modeling
-library(rstanarm)  # Bayesian regression with easy syntax
+library(rstanarm)  
 
-# Optional: handle missing data
+#handle missing data
 library(mice)
 
 df <- read.csv("C:/Users/mojde/OneDrive/Desktop/Colorado SPH/PhD Courses/Spring 2026/BIOS 6624/Project1/hiv_6624_final.csv", na.strings = c("", " ", "NA"))
 
 ```
 
-## Explore Variables
 
-# 
-```{r}
-colnames(df)        # variable names
-glimpse(df)         # see types
-colSums(is.na(df))  # missing values
-```
+# Clean table: names + types + unique + missing
 
 
 ```{r}
 # Keep only year 0 (baseline) and year 2
 df_year2 <- df %>%
-  filter(year %in% c(0, 2)) %>%
-  pivot_wider(names_from = year, values_from = c(VLOAD, LEU3N, AGG_PHYS, AGG_MENT)) %>%
-  rename(
-    VLOAD_baseline = VLOAD_0,
-    VLOAD_year2 = VLOAD_2,
-    CD4_baseline = LEU3N_0,
-    CD4_year2 = LEU3N_2,
-    PHYS_year2 = AGG_PHYS_2,
-    MENT_year2 = AGG_MENT_2
+  dplyr::filter(years == 0 | years == 2)
+```
+
+## Explore Variables
+
+# 
+```{r}
+colnames(df_year2)        # variable names
+glimpse(df_year2)         # see types
+colSums(is.na(df_year2))  # missing values
+```
+
+
+
+```{r}
+df_year2 <- df_year2 %>%
+  # drop the row index column
+  select(-X) %>%
+  # recode special missing codes
+  mutate(
+    income = ifelse(income == 9, NA, income),
+    HEROPIATE = ifelse(HEROPIATE == -9, NA, HEROPIATE),
+    BMI = ifelse(BMI %in% c(999, -1), NA, BMI),
+    CESD = ifelse(CESD == -1, NA, CESD),
+    HBP = ifelse(HBP %in% c(9, -1), NA, HBP),
+    DIAB = ifelse(DIAB == 9, NA, DIAB),
+    KID = ifelse(KID == 9, NA, KID),
+    LIV34 = ifelse(LIV34 == 9, NA, LIV34),
+    FP = ifelse(FP == 9, NA, FP),
+    FRP = ifelse(FRP == 9, NA, FRP)
+  ) %>%
+  # convert categorical variables to factors
+  mutate(
+    hard_drugs = factor(hard_drugs, levels = c(0,1), labels = c("No","Yes")),
+    ART = factor(ART, levels = c(0,1), labels = c("No","Yes")),
+    everART = factor(everART, levels = c(0,1), labels = c("No","Yes")),
+    hivpos = factor(hivpos, levels = c(0,1), labels = c("Negative","Positive")),
+
+    RACE = factor(RACE),
+    EDUCBAS = factor(EDUCBAS),
+    SMOKE = factor(SMOKE),
+    DKGRP = factor(DKGRP),
+    income = factor(income),
+
+    HASHV = factor(HASHV),
+    HASHF = factor(HASHF),
+    HEROPIATE = factor(HEROPIATE),
+    IDU = factor(IDU),
+
+    HBP = factor(HBP),
+    DIAB = factor(DIAB),
+    DYSLIP = factor(DYSLIP),
+    KID = factor(KID),
+    LIV34 = factor(LIV34),
+    FRP = factor(FRP),
+    FP = factor(FP)
   )
 
+
+   
 ```
 
 
-
-```{r}
-glimpse(df_year2)
-```
-
-
-
-```{r}
-colSums(is.na(df_year2))
-
-```
-
-
+#verfiy class
 ```{r}
 sapply(df_year2, class)
 ```
 
-#Distributions (to check skewness)
-```{r}
-vars <- c("VLOAD_baseline","VLOAD_year2","CD4_baseline","CD4_year2",
-          "PHYS_year2","MENT_year2")
-
-df_year2 %>%
-  select(all_of(vars)) %>%
-  pivot_longer(everything(), names_to="Variable", values_to="Value") %>%
-  ggplot(aes(Value)) +
-  geom_histogram(bins=30, fill="orange") +
-  facet_wrap(~Variable, scales="free") +
-  theme_minimal()
-```
-
-
 
 
 ```{r}
-# Compare baseline characteristics by drug use
-df_year2 %>%
-  group_by(HardDrugUse) %>%
-  summarise(
-    n = n(),
-    mean_logVLOAD_y2 = mean(logVLOAD_year2, na.rm=TRUE),
-    mean_CD4_y2 = mean(CD4_year2, na.rm=TRUE),
-    mean_PHYS_y2 = mean(PHYS_year2, na.rm=TRUE),
-    mean_MENT_y2 = mean(MENT_year2, na.rm=TRUE)
+df_year2 <- df_year2 %>%
+  mutate(
+    CESD = as.numeric(CESD),
+    TCHOL = as.numeric(TCHOL),
+    TRIG = as.numeric(TRIG),
+    LDL = as.numeric(LDL),
+    ADH = factor(ADH)
   )
 ```
 
 
 ```{r}
+# -----------------------------
+# Missingness by year (LONG)
+# -----------------------------
+key_vars <- c("hard_drugs", "VLOAD", "LEU3N",
+              "AGG_PHYS", "AGG_MENT",
+              "age", "RACE", "EDUCBAS")
+
+missing_long <- df_year2 %>%
+  group_by(years) %>%
+  summarise(across(all_of(key_vars),
+                   ~ round(mean(is.na(.)) * 100, 2))) %>%
+  pivot_longer(cols = -years,
+               names_to = "Variable",
+               values_to = "Percent_Missing") %>%
+  arrange(years, desc(Percent_Missing))
+
+missing_long
+
+```
+
+
+```{r}
+
+ggplot(missing_long, aes(x = Variable, y = Percent_Missing)) +
+  geom_col() +
+  facet_wrap(~years) +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Percent Missing by Year (0 vs 2)", y = "% Missing", x = "")
+
+```
+
+
+
+```{r}
+#check duplicate rows per (newid, years)
+  count(newid, years) %>%
+  count(n)
+dup_check
+
+```
+
+
+```{r}
+# -----------------------------
+# Distributions: check continuous variables by year (LONG)
+# -----------------------------
+cont_vars <- c( "LEU3N", "AGG_PHYS", "AGG_MENT", "age", "CESD")
+
 df_year2 %>%
-  pivot_longer(cols=c(logVLOAD_year2, CD4_year2, PHYS_year2, MENT_year2),
-               names_to="Outcome", values_to="Value") %>%
-  ggplot(aes(HardDrugUse, Value, fill=HardDrugUse)) +
-  geom_boxplot() +
-  facet_wrap(~Outcome, scales="free") +
-  theme_minimal()
+  select(years, all_of(cont_vars)) %>%
+  pivot_longer(-years, names_to = "Variable", values_to = "Value") %>%
+  ggplot(aes(x = Value)) +
+  geom_histogram(bins = 30, fill = "steelblue") +
+  facet_grid(years ~ Variable, scales = "free") +
+  theme_minimal() +
+  labs(title = "Distributions by Year (0 vs 2)")
+
 ```
+```{r}
+df_year2 %>%
+  ggplot(aes(x = BMI, fill = factor(years))) +
+  geom_density(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "BMI Density by Year",
+       fill = "Year",
+       x = "BMI")
 
-
+```
 
 ```{r}
-m2_vload <- lm(logVLOAD_year2 ~ HardDrugUse + logVLOAD_baseline, data = df_year2)
-m2_cd4   <- lm(CD4_year2 ~ HardDrugUse + CD4_baseline, data = df_year2)
-m2_phys  <- lm(PHYS_year2 ~ HardDrugUse + PHYS_baseline, data = df_year2)
-m2_ment  <- lm(MENT_year2 ~ HardDrugUse + MENT_baseline, data = df_year2)
-
-summary(m2_vload)
-summary(m2_cd4)
-summary(m2_phys)
-summary(m2_ment)
-
+df_year2 %>%
+  ggplot(aes(x = VLOAD)) +
+  geom_histogram(bins = 40, fill = "steelblue") +
+  facet_wrap(~years, scales = "free") +
+  theme_minimal() +
+  labs(title = "Raw VLOAD Distribution by Year",
+       x = "VLOAD",
+       y = "Count")
 ```
-
 
 ```{r}
-b_vload <- stan_glm(logVLOAD_year2 ~ HardDrugUse + logVLOAD_baseline,
-                    data = df_year2, family = gaussian(),
-                    prior = normal(0, 2.5), prior_intercept = normal(0, 5),
-                    chains = 4, iter = 2000, seed = 1)
+df_year2 %>%
+  mutate(logVLOAD = log(VLOAD + 1)) %>%
+  ggplot(aes(x = logVLOAD)) +
+  geom_histogram(bins = 40, fill = "darkorange") +
+  facet_wrap(~years) +
+  theme_minimal() +
+  labs(title = "Log(VLOAD + 1) Distribution by Year",
+       x = "log(VLOAD + 1)",
+       y = "Count")
+```
 
-print(b_vload, digits = 2)
-posterior_interval(b_vload, prob = 0.95)
 
+
+
+
+
+#4. keep needed variables
+
+```{r}
+df_year2_selected <- df_year2 %>%
+  select(newid, years, hard_drugs, VLOAD, LEU3N, AGG_PHYS, AGG_MENT, age, RACE, EDUCBAS)
 
 ```
+
+#long to wide
+
+```{r}
+df_year2_wide <- df_year2 %>%
+  select(newid, years, hard_drugs, VLOAD, LEU3N, AGG_PHYS, AGG_MENT, age, RACE, EDUCBAS) %>%
+  pivot_wider(
+    id_cols = newid,
+    names_from = years,
+    values_from = c(hard_drugs, VLOAD, LEU3N, AGG_PHYS, AGG_MENT, age, RACE, EDUCBAS),
+    names_sep = "_"
+  ) %>%
+  rename(
+    HardDrugUse_baseline = hard_drugs_0,
+    VLOAD_baseline = VLOAD_0,
+    VLOAD_year2    = VLOAD_2,
+    CD4_baseline   = LEU3N_0,
+    CD4_year2      = LEU3N_2,
+    PHYS_baseline  = AGG_PHYS_0,
+    PHYS_year2     = AGG_PHYS_2,
+    MENT_baseline  = AGG_MENT_0,
+    MENT_year2     = AGG_MENT_2,
+    Age_baseline   = age_0,
+    RACE_baseline  = RACE_0,
+    EDU_baseline   = EDUCBAS_0
+  )
+
+```
+
 
 
