@@ -1,0 +1,138 @@
+# -----------------------------
+# BIOS6624 Project 1: Full Analysis
+# -----------------------------
+
+
+```{r}
+# Read data
+
+library(tidyverse)
+
+# Frequentist modeling
+library(lmtest)
+library(sandwich)
+
+# Bayesian modeling
+library(rstanarm)  # Bayesian regression with easy syntax
+
+# Optional: handle missing data
+library(mice)
+
+df <- read.csv("C:/Users/mojde/OneDrive/Desktop/Colorado SPH/PhD Courses/Spring 2026/BIOS 6624/Project1/hiv_6624_final.csv", na.strings = c("", " ", "NA"))
+
+```
+
+## Explore Variables
+
+# 
+```{r}
+colnames(df)        # variable names
+glimpse(df)         # see types
+colSums(is.na(df))  # missing values
+```
+
+
+```{r}
+# Keep only year 0 (baseline) and year 2
+df_year2 <- df %>%
+  filter(year %in% c(0, 2)) %>%
+  pivot_wider(names_from = year, values_from = c(VLOAD, LEU3N, AGG_PHYS, AGG_MENT)) %>%
+  rename(
+    VLOAD_baseline = VLOAD_0,
+    VLOAD_year2 = VLOAD_2,
+    CD4_baseline = LEU3N_0,
+    CD4_year2 = LEU3N_2,
+    PHYS_year2 = AGG_PHYS_2,
+    MENT_year2 = AGG_MENT_2
+  )
+
+```
+
+
+
+```{r}
+glimpse(df_year2)
+```
+
+
+
+```{r}
+colSums(is.na(df_year2))
+
+```
+
+
+```{r}
+sapply(df_year2, class)
+```
+
+#Distributions (to check skewness)
+```{r}
+vars <- c("VLOAD_baseline","VLOAD_year2","CD4_baseline","CD4_year2",
+          "PHYS_year2","MENT_year2")
+
+df_year2 %>%
+  select(all_of(vars)) %>%
+  pivot_longer(everything(), names_to="Variable", values_to="Value") %>%
+  ggplot(aes(Value)) +
+  geom_histogram(bins=30, fill="orange") +
+  facet_wrap(~Variable, scales="free") +
+  theme_minimal()
+```
+
+
+
+
+```{r}
+# Compare baseline characteristics by drug use
+df_year2 %>%
+  group_by(HardDrugUse) %>%
+  summarise(
+    n = n(),
+    mean_logVLOAD_y2 = mean(logVLOAD_year2, na.rm=TRUE),
+    mean_CD4_y2 = mean(CD4_year2, na.rm=TRUE),
+    mean_PHYS_y2 = mean(PHYS_year2, na.rm=TRUE),
+    mean_MENT_y2 = mean(MENT_year2, na.rm=TRUE)
+  )
+```
+
+
+```{r}
+df_year2 %>%
+  pivot_longer(cols=c(logVLOAD_year2, CD4_year2, PHYS_year2, MENT_year2),
+               names_to="Outcome", values_to="Value") %>%
+  ggplot(aes(HardDrugUse, Value, fill=HardDrugUse)) +
+  geom_boxplot() +
+  facet_wrap(~Outcome, scales="free") +
+  theme_minimal()
+```
+
+
+
+```{r}
+m2_vload <- lm(logVLOAD_year2 ~ HardDrugUse + logVLOAD_baseline, data = df_year2)
+m2_cd4   <- lm(CD4_year2 ~ HardDrugUse + CD4_baseline, data = df_year2)
+m2_phys  <- lm(PHYS_year2 ~ HardDrugUse + PHYS_baseline, data = df_year2)
+m2_ment  <- lm(MENT_year2 ~ HardDrugUse + MENT_baseline, data = df_year2)
+
+summary(m2_vload)
+summary(m2_cd4)
+summary(m2_phys)
+summary(m2_ment)
+
+```
+
+
+```{r}
+b_vload <- stan_glm(logVLOAD_year2 ~ HardDrugUse + logVLOAD_baseline,
+                    data = df_year2, family = gaussian(),
+                    prior = normal(0, 2.5), prior_intercept = normal(0, 5),
+                    chains = 4, iter = 2000, seed = 1)
+
+print(b_vload, digits = 2)
+posterior_interval(b_vload, prob = 0.95)
+
+
+```
+
+
