@@ -112,9 +112,7 @@ df_year2 <- df_year2 %>%
 
 
 ```{r}
-# -----------------------------
-# Missingness by year (LONG)
-# -----------------------------
+#percent of missing by year (table)
 key_vars <- c("hard_drugs", "VLOAD", "LEU3N",
               "AGG_PHYS", "AGG_MENT",
               "age", "RACE", "EDUCBAS")
@@ -134,7 +132,7 @@ missing_long
 
 
 ```{r}
-
+#percent of missing by year (figure)
 ggplot(missing_long, aes(x = Variable, y = Percent_Missing)) +
   geom_col() +
   facet_wrap(~years) +
@@ -148,6 +146,7 @@ ggplot(missing_long, aes(x = Variable, y = Percent_Missing)) +
 
 ```{r}
 #check duplicate rows per (newid, years)
+  df_year2 %>%
   count(newid, years) %>%
   count(n)
 dup_check
@@ -171,16 +170,13 @@ df_year2 %>%
   labs(title = "Distributions by Year (0 vs 2)")
 
 ```
-```{r}
-df_year2 %>%
-  ggplot(aes(x = BMI, fill = factor(years))) +
-  geom_density(alpha = 0.4) +
-  theme_minimal() +
-  labs(title = "BMI Density by Year",
-       fill = "Year",
-       x = "BMI")
+#age: almost symmetric
+#AGG_MENT: Slight left skew (tail toward lower values), most values between 40–65
+#AGG_PHYS:Fairly symmetric, centered around ~50–60, slight upward shift at year 2, slight upward shift at year 2 (possible improvement)
+#CESD: right-skewed, do log(CSED+1)
+#LEU3N:Strong right skew, do log(LEU3N)
 
-```
+
 
 ```{r}
 df_year2 %>%
@@ -192,12 +188,15 @@ df_year2 %>%
        x = "VLOAD",
        y = "Count")
 ```
+# very right skew, almost all observations are near 0, a few large values
+
+
 
 ```{r}
 df_year2 %>%
   mutate(logVLOAD = log(VLOAD + 1)) %>%
   ggplot(aes(x = logVLOAD)) +
-  geom_histogram(bins = 40, fill = "darkorange") +
+  geom_histogram(bins = 40, fill = "#1B9E77") +
   facet_wrap(~years) +
   theme_minimal() +
   labs(title = "Log(VLOAD + 1) Distribution by Year",
@@ -205,9 +204,31 @@ df_year2 %>%
        y = "Count")
 ```
 
+#Distribution looks: Roughly bell-shaped, much more symmetric, Still slightly right-skewed, but reasonable
+
+```{r}
+df_year2 %>%
+  ggplot(aes(x = BMI)) +
+  geom_density(fill = "#2C7FB8", alpha = 0.5, size = 1) +
+  theme_minimal(base_size = 14) +
+  labs(title = "BMI Distribution",
+       x = "BMI",
+       y = "Density") +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
 
 
+```
 
+
+#most BMI between 20–40, There is a MASSIVE outlier around 500, what to do?
+
+```{r}
+summary(df_year2$BMI)
+max(df_year2$BMI, na.rm = TRUE)
+```
+#BMI with max 515, think about this
 
 
 #4. keep needed variables
