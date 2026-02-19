@@ -1,0 +1,5 @@
+Outcome,Model,Term,Estimate,95% CI,P-value
+Viral Load,Adjusted + Adherence,HardDrugUse_baselineYes,-0.1519,"(-0.5395, 0.2356)",0.441
+CD4,Adjusted + Adherence,HardDrugUse_baselineYes,-0.4622,"(-0.625, -0.2993)",4.22e-8
+Physical QOL,Adjusted + Adherence,HardDrugUse_baselineYes,-2.6964,"(-5.5801, 0.1872)",0.0668
+Mental QOL,Adjusted + Adherence,HardDrugUse_baselineYes,-1.7494,"(-5.3542, 1.8553)",0.341

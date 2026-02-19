@@ -1,434 +1,110 @@
-# -----------------------------
-# BIOS6624 Project 1: Full Analysis
-# -----------------------------
 
 
 ```{r}
-# Read data
+ #============================================================
+# BIOS6624 Project 1 - Script 02: Frequentist Models + Tables
+# Purpose:
+#   - Load processed wide dataset (from Script 01)
+#   - Fit core models (total effect; no adherence)
+#   - Produce a results table (estimate, CI, p-value) for exposure
+# Outputs:
+#   - results/tables/frequentist_core_results.csv
+# ============================================================
 
 library(tidyverse)
-
-# Frequentist modeling
 library(lmtest)
 library(sandwich)
 
-# Bayesian modeling
-library(rstanarm)  
+processed_path <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/DataProcessed/df_year2_wide.rds"
+results_tbl    <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/Results/Tables"
 
-#handle missing data
-library(mice)
-
-df <- read.csv("C:/Users/mojde/OneDrive/Desktop/Colorado SPH/PhD Courses/Spring 2026/BIOS 6624/Project1/hiv_6624_final.csv", na.strings = c("", " ", "NA"))
+df_wide <- readRDS(processed_path)
 
 ```
 
 
-# Clean table: names + types + unique + missing
+vars <- c("HardDrugUse_baseline","logVLOAD_baseline","Age_baseline","RACE_baseline",
+          "EDU_baseline","Income_baseline","Smoke_baseline","Alcohol_baseline","logCESD_baseline")
 
-
-```{r}
-# Keep only year 0 (baseline) and year 2
-df_year2 <- df %>%
-  dplyr::filter(years == 0 | years == 2)
-```
-
-## Explore Variables
-
-# 
-```{r}
-colnames(df_year2)        # variable names
-glimpse(df_year2)         # see types
-colSums(is.na(df_year2))  # missing values
-```
+sapply(df_wide[vars], function(x) {
+  if (is.factor(x) || is.character(x)) length(unique(na.omit(x))) else NA
+})
+table(df_wide$HardDrugUse_baseline, useNA = "ifany")
 
 
 
 ```{r}
-df_year2 <- df_year2 %>%
-  # recode special missing codes
-  mutate(
-    income = ifelse(income == 9, NA, income),
-    HEROPIATE = ifelse(HEROPIATE == -9, NA, HEROPIATE),
-    BMI = ifelse(BMI %in% c(999, -1), NA, BMI),
-    CESD = ifelse(CESD == -1, NA, CESD),
-    HBP = ifelse(HBP %in% c(9, -1), NA, HBP),
-    DIAB = ifelse(DIAB == 9, NA, DIAB),
-    KID = ifelse(KID == 9, NA, KID),
-    LIV34 = ifelse(LIV34 == 9, NA, LIV34),
-    FP = ifelse(FP == 9, NA, FP),
-    FRP = ifelse(FRP == 9, NA, FRP)
-    ) %>%
-  # convert categorical variables to factors
-  mutate(
-     hard_drugs = factor(hard_drugs, levels = c(0,1), labels = c("No","Yes")),
-    ART = factor(ART, levels = c(0,1), labels = c("No","Yes")),
-    EVERART = factor(everART, levels = c(0,1), labels = c("No","Yes")),
-    hivpos = factor(hivpos, levels = c(0,1), labels = c("Negative","Positive")),
-
-    RACE = factor(RACE),
-    EDUCBAS = factor(EDUCBAS),
-    SMOKE = factor(SMOKE),
-    DKGRP = factor(DKGRP),
-    income = factor(income),
-
-    HASHV = factor(HASHV),
-    HASHF = factor(HASHF),
-    HEROPIATE = factor(HEROPIATE),
-    IDU = factor(IDU),
-    ADH     = factor(ADH),
-
-    HBP = factor(HBP),
-    DIAB = factor(DIAB),
-    DYSLIP = factor(DYSLIP),
-    KID = factor(KID),
-    LIV34 = factor(LIV34),
-    FRP = factor(FRP),
-  )
-
-```
-
-
-#verfiy class
-```{r}
-sapply(df_year2, class)
-```
-
-
-
-```{r}
-df_year2 <- df_year2 %>%
-  mutate(
-    CESD = as.numeric(CESD),
-    TCHOL = as.numeric(TCHOL),
-    TRIG = as.numeric(TRIG),
-    LDL = as.numeric(LDL),
-    ADH = factor(ADH)
-  )
-```
-
-
-
-```{r}
-
-df_year2_selected <- df_year2 %>%
-  select(
-    newid, years,
-
-    # exposure
-    hard_drugs,
-
-    # outcomes
-    VLOAD, LEU3N, AGG_PHYS, AGG_MENT,
-
-    # core baseline confounders
-    age, RACE, EDUCBAS, income, SMOKE, DKGRP, CESD,
-
-    # expanded health covariates (baseline)
-    BMI, HBP, DIAB, DYSLIP, KID, LIV34,
-
-    # mediator candidate (post-baseline; use later w/ caution)
-    ADH,
-
-    # sensitivity drug components
-    IDU, HEROPIATE,
-
-    # QC only (not for models)
-    hivpos, ART, EVERART
-  )
-```
-
-
-
-
-```{r}
-#percent of missing by year (table)
-key_vars <- c(
-  "hard_drugs",
-  "VLOAD", "LEU3N", "AGG_PHYS", "AGG_MENT",
-  "age", "RACE", "EDUCBAS", "income", "SMOKE", "DKGRP", "CESD",
-  "BMI", "HBP", "DIAB", "DYSLIP", "KID", "LIV34",
-  "ADH", "IDU", "HEROPIATE"
+# ---- Fit core models (no adherence; adherence is a mediator) ----
+m_vl_core <- lm(
+  logVLOAD_year2 ~ HardDrugUse_baseline + logVLOAD_baseline +
+    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
+    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
+  data = df_wide
 )
 
-missing_long <- df_year2_selected %>%
-  group_by(years) %>%
-  summarise(across(all_of(key_vars),
-                   ~ round(mean(is.na(.)) * 100, 2))) %>%
-  pivot_longer(cols = -years,
-               names_to = "Variable",
-               values_to = "Percent_Missing") %>%
-  arrange(years, desc(Percent_Missing))
-
-missing_long
-
-```
-
-
-```{r}
-#percent of missing by year (figure)
-ggplot(missing_long, aes(x = Variable, y = Percent_Missing)) +
-  geom_col() +
-  facet_wrap(~years) +
-  coord_flip() +
-  theme_minimal() +
-  labs(title = "Percent Missing by Year (0 vs 2)", y = "% Missing", x = "")
-
-```
-
-#why adherence is missing?
-
-```{r}
-#check duplicate rows per (newid, years)
-dup_check <- df_year2_selected %>%
-  count(newid, years) %>%
-  count(n)
-
-dup_check
-
-```
-
-
-```{r}
-# -----------------------------
-# Distributions: check continuous variables by year (LONG)
-# -----------------------------
-cont_vars <- c( "LEU3N", "AGG_PHYS", "AGG_MENT", "age", "CESD")
-
-df_year2_selected %>%
-  select(years, all_of(cont_vars)) %>%
-  pivot_longer(-years, names_to = "Variable", values_to = "Value") %>%
-  ggplot(aes(x = Value)) +
-  geom_histogram(bins = 30, fill = "#C0809A") +
-  facet_grid(years ~ Variable, scales = "free") +
-  theme_minimal() +
-  labs(title = "Distributions by Year (0 vs 2)")
-
-```
-#age: almost symmetric
-#AGG_MENT: Slight left skew (tail toward lower values), most values between 40–65
-#AGG_PHYS:Fairly symmetric, centered around ~50–60, slight upward shift at year 2, slight upward shift at year 2 (possible improvement)
-#CESD: right-skewed, do log(CSED+1)
-#LEU3N:Strong right skew, do log(LEU3N)
-
-
-```{r}
-df_year2_selected %>%
-  mutate(logCESD = log(CESD + 1),logLEU3N= log(LEU3N) ) %>%
-  ggplot(aes(x = logCESD)) +
-  geom_histogram(bins = 40, fill = "#A3B18A") +
-  facet_wrap(~years) +
-  theme_minimal() +
-  labs(title = "Log(CESD + 1) Distribution by Year",
-       x = "log(CESD + 1)",
-       y = "Count")
-```
-
-
-
-```{r}
-df_year2_selected %>%
-  mutate(logLEU3N= log(LEU3N) ) %>%
-  ggplot(aes(x = logLEU3N)) +
-  geom_histogram (bins = 40, fill = "#D4A373") +
-  facet_wrap(~years) +
-  theme_minimal() +
-  labs(title = "Log(VLOAD + 1) Distribution by Year",
-       x = "log(VLOAD + 1)",
-       y = "Count")
-```
-
-
-
-
-
-```{r}
-df_year2_selected %>%
-  ggplot(aes(x = VLOAD)) +
-  geom_histogram(bins = 40, fill = "steelblue") +
-  facet_wrap(~years, scales = "free") +
-  theme_minimal() +
-  labs(title = "Raw VLOAD Distribution by Year",
-       x = "VLOAD",
-       y = "Count")
-```
-# very right skew, almost all observations are near 0, a few large values
-
-
-
-```{r}
-df_year2_selected %>%
-  mutate(logVLOAD = log(VLOAD + 1)) %>%
-  ggplot(aes(x = logVLOAD)) +
-  geom_histogram(bins = 40, fill = "#1B9E77") +
-  facet_wrap(~years) +
-  theme_minimal() +
-  labs(title = "Log(VLOAD + 1) Distribution by Year",
-       x = "log(VLOAD + 1)",
-       y = "Count")
-```
-
-#Distribution looks: Roughly bell-shaped, much more symmetric, Still slightly right-skewed, but reasonable
-
-```{r}
-df_year2_selected %>%
-  ggplot(aes(x = BMI)) +
-  geom_density(fill = "#2C7FB8", alpha = 0.5, size = 1) +
-  theme_minimal(base_size = 14) +
-  labs(title = "BMI Distribution",
-       x = "BMI",
-       y = "Density") +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
-
-
-```
-
-
-#most BMI between 20–30
-
-```{r}
-summary(df_year2_selected$BMI)
-```
-#BMI with max 515, think about this
-
-```{r}
-df_year2_selected <- df_year2_selected %>%
-  mutate(BMI = ifelse(!is.na(BMI) & BMI > 70, NA, BMI))
-```
-
-
-#long to wide
-
-```{r}
-df_year2_wide <- df_year2_selected %>%
-  pivot_wider(
-    id_cols = newid,
-    names_from = years,
-    values_from = -c(newid, years),
-    names_sep = "_"
-  ) %>%
-  rename(
-    # Exposure
-    HardDrugUse_baseline = hard_drugs_0,
-
-    # Outcomes
-    VLOAD_baseline = VLOAD_0,
-    VLOAD_year2    = VLOAD_2,
-    CD4_baseline   = LEU3N_0,
-    CD4_year2      = LEU3N_2,
-    PHYS_baseline  = AGG_PHYS_0,
-    PHYS_year2     = AGG_PHYS_2,
-    MENT_baseline  = AGG_MENT_0,
-    MENT_year2     = AGG_MENT_2,
-
-    # Core baseline confounders
-    Age_baseline   = age_0,
-    RACE_baseline  = RACE_0,
-    EDU_baseline   = EDUCBAS_0,
-    Income_baseline = income_0,
-    Smoke_baseline  = SMOKE_0,
-    Alcohol_baseline = DKGRP_0,
-    CESD_baseline   = CESD_0,
-
-    # Expanded health covariates (baseline)
-    BMI_baseline    = BMI_0,
-    HBP_baseline    = HBP_0,
-    DIAB_baseline   = DIAB_0,
-    DYSLIP_baseline = DYSLIP_0,
-    KID_baseline    = KID_0,
-    LIV34_baseline  = LIV34_0,
-
-    # Sensitivity drug components (baseline)
-    IDU_baseline = IDU_0,
-    HEROPIATE_baseline = HEROPIATE_0
-  )
-
-```
-
-
-
-```{r}
-#add log transformed variables
-df_year2_wide <- df_year2_wide %>%
-  mutate(
-    logVLOAD_baseline = log(VLOAD_baseline + 1),
-    logVLOAD_year2    = log(VLOAD_year2 + 1),
-
-    logCD4_baseline = ifelse(CD4_baseline > 0, log(CD4_baseline), NA),
-    logCD4_year2    = ifelse(CD4_year2 > 0, log(CD4_year2), NA),
-
-    logCESD_baseline = log(CESD_baseline + 1)
-  )
-```
-
-#Frequentist Analysis
-
-```{r}
-#viral load model
-model_vl_core <- lm(
-  logVLOAD_year2 ~ 
-    HardDrugUse_baseline +
-    logVLOAD_baseline +
-    Age_baseline +
-    RACE_baseline +
-    EDU_baseline +
-    Income_baseline +
-    Smoke_baseline +
-    Alcohol_baseline +
-    logCESD_baseline,
-  data = df_year2_wide
+m_cd4_core <- lm(
+  logCD4_year2 ~ HardDrugUse_baseline + logCD4_baseline +
+    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
+    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
+  data = df_wide
 )
 
-summary(model_vl_core)
+m_phys_core <- lm(
+  PHYS_year2 ~ HardDrugUse_baseline + PHYS_baseline +
+    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
+    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
+  data = df_wide
+)
+
+m_ment_core <- lm(
+  MENT_year2 ~ HardDrugUse_baseline + MENT_baseline +
+    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
+    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
+  data = df_wide
+)
+
 ```
 
 
+
 ```{r}
-model_cd4_core <- lm(
-  logCD4_year2 ~ 
-    HardDrugUse_baseline +
-    logCD4_baseline +
-    Age_baseline +
-    RACE_baseline +
-    EDU_baseline +
-    Income_baseline +
-    Smoke_baseline +
-    Alcohol_baseline +
-    logCESD_baseline,
-  data = df_year2_wide
+# ---- Helper to extract robust estimate + CI + p-value for exposure ----
+get_robust_row <- function(model, outcome_label) {
+  ct <- lmtest::coeftest(model, vcov = sandwich::vcovHC(model, type = "HC3"))
+  est <- ct["HardDrugUse_baselineYes", "Estimate"]
+  se  <- ct["HardDrugUse_baselineYes", "Std. Error"]
+  p   <- ct["HardDrugUse_baselineYes", "Pr(>|t|)"]
+
+  # 95% CI using normal approximation (simple + common)
+  lo <- est - 1.96 * se
+  hi <- est + 1.96 * se
+
+  data.frame(
+    outcome = outcome_label,
+    estimate = est,
+    se_robust = se,
+    ci_low = lo,
+    ci_high = hi,
+    p_value = p
+  )
+}
+```
+
+
+
+```{r}
+# ---- Build results table for the exposure effect ----
+freq_table <- bind_rows(
+  get_robust_row(m_vl_core,  "logVLOAD (Year 2)"),
+  get_robust_row(m_cd4_core, "logCD4 (Year 2)"),
+  get_robust_row(m_phys_core, "AGG_PHYS (Year 2)"),
+  get_robust_row(m_ment_core, "AGG_MENT (Year 2)")
 )
 ```
 
 
 
 ```{r}
-model_phys_core <- lm(
-  PHYS_year2 ~ 
-    HardDrugUse_baseline +
-    PHYS_baseline +
-    Age_baseline +
-    RACE_baseline +
-    EDU_baseline +
-    Income_baseline +
-    Smoke_baseline +
-    Alcohol_baseline +
-    logCESD_baseline,
-  data = df_year2_wide
-)
-
-model_ment_core <- lm(
-  MENT_year2 ~ 
-    HardDrugUse_baseline +
-    MENT_baseline +
-    Age_baseline +
-    RACE_baseline +
-    EDU_baseline +
-    Income_baseline +
-    Smoke_baseline +
-    Alcohol_baseline +
-    logCESD_baseline,
-  data = df_year2_wide
-)
+freq_table
+write.csv(freq_table, file.path(results_tbl, "frequentist_core_results.csv"), row.names = FALSE)
 ```
-

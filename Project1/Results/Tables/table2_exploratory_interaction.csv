@@ -1,0 +1,13 @@
+Outcome,Model,Term,Estimate,95% CI,P-value
+Viral Load,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes,-0.081,"(-0.6101, 0.448)",0.764
+Viral Load,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year22,-0.2203,"(-0.973, 0.5323)",0.565
+Viral Load,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year23,1.2865,"(-0.9214, 3.4944)",0.253
+CD4,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes,-0.4369,"(-0.6593, -0.2145)",1.3e-4
+CD4,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year22,-0.0762,"(-0.3925, 0.24)",0.636
+CD4,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year23,0.4123,"(-0.5143, 1.3389)",0.382
+Physical QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes,-3.9316,"(-7.8648, 0.0016)",0.0501
+Physical QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year22,2.8448,"(-2.7598, 8.4494)",0.319
+Physical QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year23,-3.0953,"(-19.5084, 13.3177)",0.711
+Mental QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes,5.8654,"(0.9986, 10.7322)",0.0183
+Mental QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year22,-16.057,"(-23.0067, -9.1073)",7.19e-6
+Mental QOL,Adjusted + Adherence + Interaction,HardDrugUse_baselineYes:ADH_year23,-6.5791,"(-26.6159, 13.4578)",0.519
