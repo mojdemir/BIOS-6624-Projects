@@ -1,1 +1,1 @@
-This repository contains analysis code and information for BIOS6624 Project0.
+This repository contains analysis code and information for BIOS6624 Project1.
