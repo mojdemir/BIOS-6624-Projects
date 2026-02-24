@@ -1,9 +1,9 @@
 Model,N,R2,Adj_R2,RMSE
-Viral Load (Adjusted),464,0.1677,0.15310000000000001,1.1213
-CD4 (Adjusted),464,0.5641,0.5564,176.3508
-Physical QOL (Adjusted),464,0.4291,0.4191,7.6911
-Mental QOL (Adjusted),464,0.3335,0.3218,9.7381
-Viral Load (Adjusted + Adherence),464,0.1858,0.166,1.1091
-CD4 (Adjusted + Adherence),464,0.5737,0.5633,174.4015
-Physical QOL (Adjusted + Adherence),464,0.4403,0.4267,7.6155
-Mental QOL (Adjusted + Adherence),464,0.3483,0.3324,9.6299
+Viral Load (Adj),463,0.1706,0.156,1.1195
+CD4 (Adj),463,0.5639,0.5562,176.3097
+Physical QOL (Adj),463,0.4298,0.4197,7.6947
+Mental QOL (Adj),463,0.3336,0.3219,9.7476
+Viral Load (Adj + Adh),463,0.1817,0.1655,1.112
+CD4 (Adj + Adh),463,0.5676,0.5591,175.554
+Physical QOL (Adj + Adh),463,0.4338,0.4226,7.6672
+Mental QOL (Adj + Adh),463,0.3369,0.3237,9.7241

@@ -64,7 +64,6 @@ SAVE_FILES <- TRUE
 # STEP 0B: Prepare analytic dataset (Year 2 wide)
 # -----------------------------
 # This implements your overall analytic restriction that BMI and exposure are non-missing.
-# Additional missingness is handled later by model.frame(..., na.omit) per model.
 df_year2_wide <- df_analytic%>%
   filter(!is.na(HardDrugUse_baseline), !is.na(BMI_baseline)) %>%
   mutate(
@@ -75,12 +74,10 @@ df_year2_wide <- df_analytic%>%
     ADH_year2      = factor(ADH_year2)
   )
 
-cat("\n--- Row counts after STEP 0B (baseline restriction) ---\n")
-cat("nrow(df_analytic)       =", nrow(df_analytic), "\n")
-cat("nrow(df_year2_wide) =", nrow(df_year2_wide), "\n")
+nrow(df_analytic)
+nrow(df_year2_wide)
 
 ```
-
 
 ```{r}
 # -----------------------------
@@ -117,7 +114,7 @@ model {
 generated quantities {
   vector[N] log_lik;
   for (n in 1:N) {
-    log_lik[n] = normal_lpdf(y[n] | X[n] * beta, sigma);
+    log_lik[n] = normal_lpdf(y[n] | dot_product(row(X, n), beta), sigma);
   }
 }
 ", dir = stan_dir, basename = "hiv_linear_regression_half_normal")
@@ -133,7 +130,7 @@ mod <- cmdstan_model(stan_file)
 
 
 # -----------------------------
-# Helper: clinically meaningful thresholds (gamma)
+#clinically meaningful thresholds (gamma)
 # -----------------------------
 # - Viral load: 0.5 log10 units
 # - CD4: 50 cells/uL
@@ -156,16 +153,16 @@ get_gamma <- function(outcome_y2) {
 #   "adjusted"      = includes baseline outcome + covariates
 #   "adjusted_adh"  = adjusted + ADH_year2
 # ============================================================
-# 1️⃣ Viral Load – Adjusted
+# a) Viral Load – Adjusted
 # ============================================================
-# outcome_y2  <- "log10VLOAD_year2"
-# baseline_y0 <- "log10VLOAD_baseline"
-# model_name  <- "adjusted"
-# seed        <- 123
+outcome_y2  <- "log10VLOAD_year2"
+baseline_y0 <- "log10VLOAD_baseline"
+model_name  <- "adjusted"
+seed        <- 123
 
 
 # ============================================================
-# 2️⃣ Viral Load – Adjusted + ADH
+# b) Viral Load – Adjusted + ADH
 # ============================================================
 # outcome_y2  <- "log10VLOAD_year2"
 # baseline_y0 <- "log10VLOAD_baseline"
@@ -174,7 +171,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 3️⃣ CD4 – Adjusted
+# c) CD4 – Adjusted
 # ============================================================
 # outcome_y2  <- "CD4_year2"
 # baseline_y0 <- "CD4_baseline"
@@ -183,7 +180,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 4️⃣ CD4 – Adjusted + ADH
+# d) CD4 – Adjusted + ADH
 # ============================================================
 #outcome_y2  <- "CD4_year2"
 #baseline_y0 <- "CD4_baseline"
@@ -192,7 +189,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 5️⃣ Physical QoL – Adjusted
+# e) Physical QoL – Adjusted
 # ============================================================
 # outcome_y2  <- "PHYSQOL_year2"
 # baseline_y0 <- "PHYSQOL_baseline"
@@ -201,7 +198,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 6️⃣ Physical QoL – Adjusted + ADH
+# f) Physical QoL – Adjusted + ADH
 # ============================================================
 # outcome_y2  <- "PHYSQOL_year2"
 # baseline_y0 <- "PHYSQOL_baseline"
@@ -210,7 +207,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 7️⃣ Mental QoL – Adjusted
+# g)  Mental QoL – Adjusted
 # ============================================================
 # outcome_y2  <- "MENTQOL_year2"
 # baseline_y0 <- "MENTQOL_baseline"
@@ -219,7 +216,7 @@ get_gamma <- function(outcome_y2) {
 
 
 # ============================================================
-# 8️⃣ Mental QoL – Adjusted + ADH
+# h) Mental QoL – Adjusted + ADH
 # ============================================================
 #outcome_y2  <- "MENTQOL_year2"
 #baseline_y0 <- "MENTQOL_baseline"
@@ -240,6 +237,8 @@ get_gamma <- function(outcome_y2) {
 #   baseline_y0 (e.g., CD4_baseline)
 # Optional additional covariate:
 #   ADH_year2 (only if model_name == "adjusted_adh")
+
+
 form <- if (model_name == "adjusted") {
   as.formula(paste0(
     outcome_y2, " ~ HardDrugUse_baseline + ", baseline_y0,
@@ -373,6 +372,7 @@ drug_summary <- purrr::map_dfr(drug_terms, function(term) {
     P_beta_gt_0 = mean(b > 0)
   )
 })
+
 
 cat("\n--- HardDrugUse effect (posterior mean + 95% HDI) ---\n")
 print(drug_summary)
