@@ -1,66 +1,83 @@
 
 
 ```{r}
- #============================================================
-# BIOS6624 Project 1 - Script 02: Frequentist Models + Tables
+#============================================================
+# BIOS6624 Project 1 - Script 02: Frequentist Models + Table 2
 # Purpose:
-#   - Load processed wide dataset (from Script 01)
-#   - Fit core models (total effect; no adherence)
-#   - Produce a results table (estimate, CI, p-value) for exposure
-# Outputs:
-#   - results/tables/frequentist_core_results.csv
-# ============================================================
-
-library(tidyverse)
-library(lmtest)
-library(sandwich)
-
-processed_path <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/DataProcessed/df_year2_wide.rds"
-results_tbl    <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/Results/Tables"
-
-df_wide <- readRDS(processed_path)
-
+#   - Use df_wide_final (wide Year 0 + Year 2 analytic dataset)
+#   - Fit adjusted linear regression models for Year 2 outcomes:
+#       Adjusted: Y2 ~ HardDrug + Y0 + Age + BMI + Smoking + Edu + Race
+#   - (exploratory): add adherence as an additional covariate (no interaction)
+#   - Extract Hard Drug Use effect: Estimate, 95% CI, p-value
+#   - Create Table 2 (Adjusted results)
+#
+# Input:
+#   df_wide_final must already exist in environment (or read it in)
+# Outputs (Tables):
+#Results/Tables/table2_frequentist_year2.csv
+#Results/Tables/table2_exploratory_adherence.csv
+#Results/Tables/model_fit_metrics.csv
+#Results/Tables/model_diagnostic_tests.csv
+#============================================================
+library(dplyr)
+library(readr)
+library(tibble)
+library(dplyr)
+library(readr)
+library(car)      # vif()
+library(lmtest)   # bptest()
 ```
-
-
-vars <- c("HardDrugUse_baseline","logVLOAD_baseline","Age_baseline","RACE_baseline",
-          "EDU_baseline","Income_baseline","Smoke_baseline","Alcohol_baseline","logCESD_baseline")
-
-sapply(df_wide[vars], function(x) {
-  if (is.factor(x) || is.character(x)) length(unique(na.omit(x))) else NA
-})
-table(df_wide$HardDrugUse_baseline, useNA = "ifany")
 
 
 
 ```{r}
-# ---- Fit core models (no adherence; adherence is a mediator) ----
-m_vl_core <- lm(
-  logVLOAD_year2 ~ HardDrugUse_baseline + logVLOAD_baseline +
-    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
-    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
-  data = df_wide
+#------------------------------------------------------------
+# 0) Analytic dataset
+#------------------------------------------------------------
+df_analytic <- df_analysis %>%
+  filter(!is.na(HardDrugUse_baseline)) %>%
+  mutate(
+    HardDrugUse_baseline = relevel(as.factor(HardDrugUse_baseline), ref = "No"),
+    Smoke_baseline = as.factor(Smoke_baseline),
+    EDU_baseline   = as.factor(EDU_baseline),
+    RACE_baseline  = as.factor(RACE_baseline),
+    ADH_year2      = as.factor(ADH_year2)
+  )
+
+```
+
+
+
+```{r}
+ #------------------------------------------------------------
+# 1) Fit ADJUSTED models
+#------------------------------------------------------------
+# Viral load (log10)
+m_vl <- lm(
+  log10VLOAD_year2 ~ HardDrugUse_baseline + log10VLOAD_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline,
+  data = df_analytic
 )
 
-m_cd4_core <- lm(
-  logCD4_year2 ~ HardDrugUse_baseline + logCD4_baseline +
-    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
-    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
-  data = df_wide
+# CD4
+m_cd4 <- lm(
+  CD4_year2 ~ HardDrugUse_baseline + CD4_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline,
+  data = df_analytic
 )
 
-m_phys_core <- lm(
+# Physical QOL
+m_phys <- lm(
   PHYS_year2 ~ HardDrugUse_baseline + PHYS_baseline +
-    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
-    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
-  data = df_wide
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline,
+  data = df_analytic
 )
 
-m_ment_core <- lm(
+# Mental QOL
+m_ment <- lm(
   MENT_year2 ~ HardDrugUse_baseline + MENT_baseline +
-    Age_baseline + RACE_baseline + EDU_baseline + Income_baseline +
-    Smoke_baseline + Alcohol_baseline + logCESD_baseline,
-  data = df_wide
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline,
+  data = df_analytic
 )
 
 ```
@@ -68,43 +85,180 @@ m_ment_core <- lm(
 
 
 ```{r}
-# ---- Helper to extract robust estimate + CI + p-value for exposure ----
-get_robust_row <- function(model, outcome_label) {
-  ct <- lmtest::coeftest(model, vcov = sandwich::vcovHC(model, type = "HC3"))
-  est <- ct["HardDrugUse_baselineYes", "Estimate"]
-  se  <- ct["HardDrugUse_baselineYes", "Std. Error"]
-  p   <- ct["HardDrugUse_baselineYes", "Pr(>|t|)"]
+#------------------------------------------------------------
+# 2) Adjusted + Adherence (NO interaction)
+#------------------------------------------------------------
+m_vl_adh <- lm(
+  log10VLOAD_year2 ~ HardDrugUse_baseline + log10VLOAD_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline +
+    ADH_year2,
+  data = df_analytic
+)
 
-  # 95% CI using normal approximation (simple + common)
-  lo <- est - 1.96 * se
-  hi <- est + 1.96 * se
+m_cd4_adh <- lm(
+  CD4_year2 ~ HardDrugUse_baseline + CD4_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline +
+    ADH_year2,
+  data = df_analytic
+)
 
-  data.frame(
-    outcome = outcome_label,
-    estimate = est,
-    se_robust = se,
-    ci_low = lo,
-    ci_high = hi,
-    p_value = p
+m_phys_adh <- lm(
+  PHYS_year2 ~ HardDrugUse_baseline + PHYS_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline +
+    ADH_year2,
+  data = df_analytic
+)
+
+m_ment_adh <- lm(
+  MENT_year2 ~ HardDrugUse_baseline + MENT_baseline +
+    Age_baseline + BMI_baseline + Smoke_baseline + EDU_baseline + RACE_baseline +
+    ADH_year2,
+  data = df_analytic
+)
+
+```
+
+
+
+
+```{r}
+#------------------------------------------------------------
+# 3) Build Table 2 (Hard Drug Use effect only)
+#    term should be "HardDrugUse_baselineYes"
+#------------------------------------------------------------
+term_hd <- "HardDrugUse_baselineYes"
+
+get_hd_row <- function(model, outcome, model_label) {
+  coefs <- summary(model)$coefficients
+  if (!term_hd %in% rownames(coefs)) stop(paste("Term not found:", term_hd))
+
+  est <- coefs[term_hd, "Estimate"]
+  p   <- coefs[term_hd, "Pr(>|t|)"]
+  ci  <- confint(model)[term_hd, ]
+
+  tibble(
+    Outcome = outcome,
+    Model = model_label,
+    `Estimate (Hard Drug Use)` = round(est, 4),
+    `95% CI` = paste0("(", round(ci[1], 4), ", ", round(ci[2], 4), ")"),
+    `P-value` = signif(p, 3)
   )
 }
-```
 
-
-
-```{r}
-# ---- Build results table for the exposure effect ----
-freq_table <- bind_rows(
-  get_robust_row(m_vl_core,  "logVLOAD (Year 2)"),
-  get_robust_row(m_cd4_core, "logCD4 (Year 2)"),
-  get_robust_row(m_phys_core, "AGG_PHYS (Year 2)"),
-  get_robust_row(m_ment_core, "AGG_MENT (Year 2)")
+table2 <- bind_rows(
+  get_hd_row(m_vl,   "Viral Load (log10)", "Adjusted"),
+  get_hd_row(m_cd4,  "CD4",          "Adjusted"),
+  get_hd_row(m_phys, "Physical QOL",       "Adjusted"),
+  get_hd_row(m_ment, "Mental QOL",         "Adjusted")
 )
-```
 
+table2
+write_csv(table2, file.path(results_tbl, "table2_frequentist_year2.csv"))
+
+# Optional exploratory table (+ adherence)
+table2_adh <- bind_rows(
+  get_hd_row(m_vl_adh,   "Viral Load (log10)", "Adjusted + Adherence"),
+  get_hd_row(m_cd4_adh,  "CD4",          "Adjusted + Adherence"),
+  get_hd_row(m_phys_adh, "Physical QOL",       "Adjusted + Adherence"),
+  get_hd_row(m_ment_adh, "Mental QOL",         "Adjusted + Adherence")
+)
+
+table2_adh
+write_csv(table2_adh, file.path(results_tbl, "table2_exploratory_adherence.csv"))
+
+```
 
 
 ```{r}
-freq_table
-write.csv(freq_table, file.path(results_tbl, "frequentist_core_results.csv"), row.names = FALSE)
+#============================================================
+# FULL DIAGNOSTICS 
+# - Creates summary tables (BP, VIF, Cook's D flags, fit metrics)
+# - Saves ONE PDF with standard lm diagnostic plots for all models
+# Outputs:
+#   Results/Tables/model_fit_metrics.csv
+#   Results/Tables/model_diagnostics_summary.csv
+#   Results/Diagnostics/lm_diagnostic_plots_all_models.pdf
+#============================================================
+library(tidyverse)
+library(broom)
+library(car)
+library(lmtest)
+
+# ----------------------------
+# Models
+# ----------------------------
+models <- list(
+  m_vl, m_cd4, m_phys, m_ment,
+  m_vl_adh, m_cd4_adh, m_phys_adh, m_ment_adh
+)
+
+model_names <- c(
+  "Viral Load (Adj)",
+  "CD4 (Adj)",
+  "Physical QOL (Adj)",
+  "Mental QOL (Adj)",
+  "Viral Load (Adj + Adh)",
+  "CD4 (Adj + Adh)",
+  "Physical QOL (Adj + Adh)",
+  "Mental QOL (Adj + Adh)"
+)
+
+# ----------------------------
+# 1) Fit metrics
+# ----------------------------
+fit_metrics <- data.frame()
+
+for (i in 1:length(models)) {
+  mod <- models[[i]]
+  g <- glance(mod)
+
+  fit_metrics <- rbind(fit_metrics, data.frame(
+    Model = model_names[i],
+    N = nobs(mod),
+    R2 = round(g$r.squared, 4),
+    Adj_R2 = round(g$adj.r.squared, 4),
+    RMSE = round(sqrt(mean(residuals(mod)^2)), 4)
+  ))
+}
+
+write_csv(fit_metrics, file.path(results_tbl, "model_fit_metrics.csv"))
+
+# ----------------------------
+# 2) Simple diagnostics
+# ----------------------------
+diag_summary <- data.frame()
+
+for (i in 1:length(models)) {
+  mod <- models[[i]]
+  bp <- bptest(mod)
+  cd <- cooks.distance(mod)
+  n <- nobs(mod)
+  thr <- 4/n
+
+  diag_summary <- rbind(diag_summary, data.frame(
+    Model = model_names[i],
+    BP_p = signif(bp$p.value, 3),
+    Max_VIF = round(max(vif(mod)), 2),
+    N_influential = sum(cd > thr)
+  ))
+}
+
+write_csv(diag_summary, file.path(results_tbl, "model_diagnostics_summary.csv"))
+
+# ----------------------------
+# 3) Diagnostic plots PDF
+# ----------------------------
+pdf(file.path(diag_dir, "lm_diagnostic_plots_all_models.pdf"))
+
+for (i in 1:length(models)) {
+  par(mfrow = c(2,2))
+  plot(models[[i]])
+  mtext(model_names[i], outer = TRUE, line = -2)
+}
+
+dev.off()
+
+cat("Done.\n")
 ```
+
+
