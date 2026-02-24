@@ -21,7 +21,7 @@ model {
 generated quantities {
   vector[N] log_lik;
   for (n in 1:N) {
-    log_lik[n] = normal_lpdf(y[n] | X[n] * beta, sigma);
+    log_lik[n] = normal_lpdf(y[n] | dot_product(row(X, n), beta), sigma);
   }
 }
 

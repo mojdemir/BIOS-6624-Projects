@@ -1,0 +1,12 @@
+$status
+[1] 0
+
+$stdout
+[1] "Checking sampler transitions treedepth.\r\nTreedepth satisfactory for all transitions.\r\n\r\nChecking sampler transitions for divergences.\r\nNo divergent transitions found.\r\n\r\nChecking E-BFMI - sampler transitions HMC potential energy.\r\nE-BFMI satisfactory.\r\n\r\nRank-normalized split effective sample size satisfactory for all parameters.\r\n\r\nRank-normalized split R-hat values satisfactory for all parameters.\r\n\r\nProcessing complete, no problems detected.\r\n"
+
+$stderr
+[1] ""
+
+$timeout
+[1] FALSE
+
