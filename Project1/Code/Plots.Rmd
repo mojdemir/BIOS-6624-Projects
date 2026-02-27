@@ -34,98 +34,89 @@ df_forest <- tribble(
 ) %>%
   mutate(
     Outcome = factor(Outcome,
-                     levels = c("Log10 Viral Load",
-                                "CD4 Count",
-                                "Physical QoL",
-                                "Mental QoL")),
-    Model = factor(Model,
-                   levels = c("Adjusted", "Adjusted + ADH")),
-    label = case_when(
-      Outcome == "CD4 Count" ~ sprintf("%.0f (%.0f, %.0f)",
-                                       beta_mean, hdi_low, hdi_high),
-      TRUE ~ sprintf("%.2f (%.2f, %.2f)",
-                     beta_mean, hdi_low, hdi_high)
-    )
+                     levels = c("Log10 Viral Load", "CD4 Count", "Physical QoL", "Mental QoL")),
+    Model = factor(Model, levels = c("Adjusted", "Adjusted + ADH"))
   )
 
 # -----------------------------
-# Custom Professional Colors
+# Colors
 # -----------------------------
-navy  <- "#1C2A39"   # deep navy blue
-gold  <- "#D4A017"   # warm muted gold
+navy <- "#1C2A39"
+gold <- "#D4A017"
+
+# -----------------------------
+# Transform to clinically meaningful units (β/γ)
+# -----------------------------
+df_plot <- df_forest %>%
+  mutate(
+    beta_std = beta_mean / gamma,
+    low_std  = hdi_low   / gamma,
+    high_std = hdi_high  / gamma,
+    label = case_when(
+      Outcome == "CD4 Count" ~ sprintf("%.0f (%.0f, %.0f)", beta_mean, hdi_low, hdi_high),
+      TRUE ~ sprintf("%.2f (%.2f, %.2f)", beta_mean, hdi_low, hdi_high)
+    ),
+    Outcome = fct_rev(Outcome)
+  )
 
 # -----------------------------
 # Plot
 # -----------------------------
-p <- ggplot(df_forest,
-            aes(x = beta_mean,
-                y = Model,
-                color = Model,
-                shape = Model)) +
+p_std <- ggplot(df_plot, aes(x = beta_std, y = Outcome, color = Model, shape = Model)) +
+  # Reference lines
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.8, color = "grey30") +
+  geom_vline(xintercept = c(-1, 1), linetype = "dotted", linewidth = 0.8, color = "grey50") +
 
-  # Zero (no effect) line
-  geom_vline(xintercept = 0,
-             linetype = "dashed",
-             linewidth = 1,
-             color = "grey30") +
+  # Intervals + points
+  geom_errorbarh(
+    aes(xmin = low_std, xmax = high_std),
+    position = position_dodge(width = 0.55),
+    height = 0.20,
+    linewidth = 1.1
+  ) +
+  geom_point(position = position_dodge(width = 0.55), size = 3.2) +
 
-  # Clinical threshold lines (±gamma)
-  geom_vline(aes(xintercept =  gamma),
-             linetype = "dotted",
-             linewidth = 0.8,
-             color = "grey50") +
-  geom_vline(aes(xintercept = -gamma),
-             linetype = "dotted",
-             linewidth = 0.8,
-             color = "grey50") +
+  # Labels (in original units)
+   geom_text(
+  aes(
+    label = label,
+    x = pmax(high_std, beta_std) + 0.12
+  ),
+  position = position_dodge(width = 0.55),
+  hjust = 0,
+  size = 3.6,
+  color = "black",
+  show.legend = FALSE
+)+
 
-  # HPDI interval
-  geom_errorbarh(aes(xmin = hdi_low, xmax = hdi_high),
-                 height = 0.18,
-                 linewidth = 1.2) +
+  # Styling
+  scale_color_manual(values = c("Adjusted" = navy, "Adjusted + ADH" = gold)) +
+  scale_shape_manual(values = c("Adjusted" = 16, "Adjusted + ADH" = 17)) +
 
-  # Posterior mean point
-  geom_point(size = 3.5) +
-
-  # Numeric annotation
-  geom_text(aes(label = label,
-                x = hdi_high),
-            nudge_x = 0.02,
-            hjust = 0,
-            size = 3.6,
-            color = "black",
-            show.legend = FALSE) +
-
-  facet_wrap(~ Outcome,
-             scales = "free_x",
-             ncol = 2) +
-
-  scale_color_manual(values = c("Adjusted" = navy,
-                                "Adjusted + ADH" = gold)) +
-
-  scale_shape_manual(values = c(16, 17)) +
-
-  scale_x_continuous(expand = expansion(mult = c(0.05, 0.30))) +
+  scale_x_continuous(
+    name = "Effect size in clinically meaningful units",
+    breaks = seq(-4, 4, by = 1),
+    expand = expansion(mult = c(0.06, 0.28))
+  ) +
 
   labs(
-    title = "Effect of Baseline Hard Drug Use on Year 2 Clinical Outcomes",
-    subtitle = "Points represent posterior means; horizontal bars represent 95% HPDIs\nDashed line = no effect; dotted lines = ± clinically meaningful threshold (γ)",
-    x = "Estimated Effect (β) on Outcome Scale",
+    title = "Figure 1. Bayesian Estimates of the Association Between Baseline Hard Drug Use and Year 2 Clinical Outcomes",
+    subtitle = "Points are posterior means; bars are 95% HPDIs. Dashed line = no effect; dotted lines = ±γ.",
     y = NULL
   ) +
 
-  theme_minimal(base_size = 15) +
+  theme_classic(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 18),
-    plot.subtitle = element_text(size = 12),
-    strip.text = element_text(face = "bold", size = 14),
-    axis.text.y = element_text(face = "bold"),
-    panel.grid.minor = element_blank(),
-    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold"),
     legend.position = "bottom",
-    legend.title = element_blank()
-  )
+    legend.title = element_blank(),
+    axis.text.y = element_text(face = "bold"),
+    plot.subtitle = element_text(size = 11),
+    plot.margin = margin(10, 40, 10, 10)
+  ) +
+  coord_cartesian(clip = "off")
 
-p
+p_std
+
 ```
 

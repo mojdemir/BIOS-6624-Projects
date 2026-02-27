@@ -1,9 +1,0 @@
-Model,BP_p,Max_VIF,N_influential
-Viral Load (Adj),0.0063,2,24
-CD4 (Adj),0.0567,2,26
-Physical QOL (Adj),1.2e-9,2,31
-Mental QOL (Adj),4.95e-8,2,37
-Viral Load (Adj + Adh),0.00386,2,32
-CD4 (Adj + Adh),0.0558,2,24
-Physical QOL (Adj + Adh),5.32e-9,2,32
-Mental QOL (Adj + Adh),3.28e-8,2,34

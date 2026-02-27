@@ -26,6 +26,10 @@ library(dplyr)
 library(readr)
 library(car)      # vif()
 library(lmtest)   # bptest()
+
+
+#---path---
+diag_dir <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project1/Results/Diagnostics"
 ```
 
 
@@ -223,30 +227,10 @@ for (i in 1:length(models)) {
 
 write_csv(fit_metrics, file.path(results_tbl, "model_fit_metrics.csv"))
 
-# ----------------------------
-# 2) Simple diagnostics
-# ----------------------------
-diag_summary <- data.frame()
 
-for (i in 1:length(models)) {
-  mod <- models[[i]]
-  bp <- bptest(mod)
-  cd <- cooks.distance(mod)
-  n <- nobs(mod)
-  thr <- 4/n
-
-  diag_summary <- rbind(diag_summary, data.frame(
-    Model = model_names[i],
-    BP_p = signif(bp$p.value, 3),
-    Max_VIF = round(max(vif(mod)), 2),
-    N_influential = sum(cd > thr)
-  ))
-}
-
-write_csv(diag_summary, file.path(results_tbl, "model_diagnostics_summary.csv"))
 
 # ----------------------------
-# 3) Diagnostic plots PDF
+# 2) Diagnostic plots PDF
 # ----------------------------
 pdf(file.path(diag_dir, "lm_diagnostic_plots_all_models.pdf"))
 

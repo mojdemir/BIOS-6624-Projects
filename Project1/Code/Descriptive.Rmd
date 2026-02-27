@@ -33,10 +33,10 @@ library(ggplot2)
 
 
 # ---- Paths ----
-raw_path      <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/DataRaw/hiv_6624_final.csv"
-processed_dir <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/DataProcessed"
-results_tbl   <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/Results/Tables"
-results_fig   <- "C:/Users/mojde/Desktop/Documents/Projects/Project1/Results/Figures"
+raw_path      <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project1/DataRaw/hiv_6624_final.csv"
+processed_dir <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project1/DataProcessed"
+results_tbl   <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project1/Results/Tables"
+results_fig   <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project1/Results/Figures"
 
 # Create folders if they don't exist (harmless if already exist)
 dir.create(processed_dir, recursive = TRUE, showWarnings = FALSE)
