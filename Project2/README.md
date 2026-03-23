@@ -5,7 +5,7 @@ analysis plan and power calculations for Project 2.
 
 ## Structure
 
-data_raw/
+dataraw/
     Preliminary dataset provided by investigator.
 
 code/
@@ -18,4 +18,4 @@ figures/
     Plots generated during preliminary data review.
 
 report/
-    R Markdown document used to produce the final analysis section.
+    Word document used to produce the final analysis section.
