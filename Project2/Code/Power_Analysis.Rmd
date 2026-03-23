@@ -58,7 +58,7 @@ alpha <- 0.05
 
 # Sample size and model settings
 N_aim1 <- 175
-p_aim1 <- 10
+p_aim1 <- 14
 
 # If the omnibus test is for 4 primary inflammatory markers jointly:
 q_aim1 <- 4
@@ -107,7 +107,7 @@ print(aim1_cortical_power)
 # ============================================================
 
 N_aim2 <- 175
-p_aim2 <- 12
+p_aim2 <- 19
 
 # If the omnibus interaction test is for 4 interaction terms jointly:
 q_aim2 <- 4
