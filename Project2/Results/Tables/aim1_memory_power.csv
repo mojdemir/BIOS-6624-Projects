@@ -1,0 +1,4 @@
+"scenario","pc","power"
+"Conservative",0.15,0.514087967831183
+"Moderate",0.2,0.765592609879172
+"Optimistic",0.25,0.924426737849463

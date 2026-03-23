@@ -1,0 +1,276 @@
+
+---
+title: "Data_Overview"
+author: "Moj"
+date: "2026-03-16"
+output: html_document
+---
+
+# ============================================================
+# BIOS6624 Project 2 - Script 01: Preliminary Data Overview
+#
+# Purpose:
+#   - Read preliminary dataset
+#   - Examine structure and summary statistics
+#   - Review plots of variables
+#   - Calculate skewness
+#   - Estimate correlations among predictors and outcomes
+#
+# Outputs:
+#   Results/Tables/summary_table.csv
+#   Results/Tables/skewness_table.csv
+#   Results/Tables/correlation_table.csv
+#   Results/Figures/*.png
+# ============================================================
+
+
+```{r}
+# -----------------------
+# Clean environment
+# -----------------------
+rm(list = ls())
+
+# -----------------------
+# Load libraries
+# -----------------------
+library(tidyverse)
+library(readr)
+library(e1071)
+
+# -----------------------
+# Define directories
+# -----------------------
+prelim_path <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/DataPrelim/PrelimData.csv"
+results_tbl <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Tables"
+results_fig <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Figures"
+output_dir  <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Output"
+
+
+# Create folders if they don't exist
+dir.create(results_tbl, recursive = TRUE, showWarnings = FALSE)
+dir.create(results_fig, recursive = TRUE, showWarnings = FALSE)
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+# -----------------------
+# Read raw data, blank as NA
+# -----------------------
+data <- read_csv(prelim_path, na = c("", " ", "NA"))
+```
+
+
+
+
+```{r}
+# -----------------------
+# Inspect structure
+# -----------------------
+str(data)
+summary(data)
+
+# -----------------------
+# Create log variables
+# -----------------------
+data$log_IL6  <- log(data$IL_6 + 0.001)
+data$log_MCP1 <- log(data$MCP_1 + 0.001)
+
+
+# -----------------------
+# Summary table
+# -----------------------
+summary_table <- data.frame(
+  variable = c("IL_6", "MCP_1", "CVLT_CNG3", "CORT_CNG3"),
+  n = c(sum(!is.na(data$IL_6)),
+        sum(!is.na(data$MCP_1)),
+        sum(!is.na(data$CVLT_CNG3)),
+        sum(!is.na(data$CORT_CNG3))),
+  mean = c(mean(data$IL_6, na.rm = TRUE),
+           mean(data$MCP_1, na.rm = TRUE),
+           mean(data$CVLT_CNG3, na.rm = TRUE),
+           mean(data$CORT_CNG3, na.rm = TRUE)),
+  sd = c(sd(data$IL_6, na.rm = TRUE),
+         sd(data$MCP_1, na.rm = TRUE),
+         sd(data$CVLT_CNG3, na.rm = TRUE),
+         sd(data$CORT_CNG3, na.rm = TRUE))
+)
+
+print(summary_table)
+write.csv(summary_table, file.path(results_tbl, "summary_table.csv"), row.names = FALSE)
+```
+
+
+```{r}
+# -----------------------
+# Skewness table
+# -----------------------
+skewness_table <- data.frame(
+  variable = c("IL_6", "MCP_1", "log_IL6", "log_MCP1", "CVLT_CNG3", "CORT_CNG3"),
+  skewness = c(
+    skewness(data$IL_6, na.rm = TRUE),
+    skewness(data$MCP_1, na.rm = TRUE),
+    skewness(data$log_IL6, na.rm = TRUE),
+    skewness(data$log_MCP1, na.rm = TRUE),
+    skewness(data$CVLT_CNG3, na.rm = TRUE),
+    skewness(data$CORT_CNG3, na.rm = TRUE)
+  )
+)
+
+print(skewness_table)
+write.csv(skewness_table, file.path(results_tbl, "skewness_table.csv"), row.names = FALSE)
+```
+
+
+```{r}
+# -----------------------
+# Combined histograms
+# -----------------------
+
+png(file.path(results_fig, "all_histograms.png"), width = 1600, height = 1200, res = 150)
+
+par(mfrow = c(2, 3), mar = c(4, 4, 3, 1), oma = c(0, 0, 2, 0))
+
+hist(data$IL_6,
+     main = "IL-6",
+     xlab = "IL-6",
+     col = "gray80",
+     border = "white")
+
+hist(data$log_IL6,
+     main = "log(IL-6)",
+     xlab = "log(IL-6)",
+     col = "gray80",
+     border = "white")
+
+hist(data$MCP_1,
+     main = "MCP-1",
+     xlab = "MCP-1",
+     col = "gray80",
+     border = "white")
+
+hist(data$log_MCP1,
+     main = "log(MCP-1)",
+     xlab = "log(MCP-1)",
+     col = "gray80",
+     border = "white")
+
+hist(data$CVLT_CNG3,
+     main = "CVLT Change",
+     xlab = "CVLT_CNG3",
+     col = "gray80",
+     border = "white")
+
+hist(data$CORT_CNG3,
+     main = "Cortical Change",
+     xlab = "CORT_CNG3",
+     col = "gray80",
+     border = "white")
+
+mtext("Histograms of Inflammatory Markers and Outcome Change Scores",
+      outer = TRUE, cex = 1.4)
+
+dev.off()
+
+
+# -----------------------
+# Combined scatterplots
+# -----------------------
+
+png(file.path(results_fig, "all_scatterplots.png"), width = 2000, height = 1600, res = 150)
+
+par(mfrow = c(2, 4), mar = c(4, 4, 3, 1), oma = c(0, 0, 2, 0))
+
+plot(data$IL_6, data$CVLT_CNG3,
+     xlab = "IL-6", ylab = "CVLT Change",
+     main = "IL-6 vs CVLT",
+     pch = 19, col = "gray40")
+abline(lm(CVLT_CNG3 ~ IL_6, data = data), col = "blue", lwd = 2)
+
+plot(data$IL_6, data$CORT_CNG3,
+     xlab = "IL-6", ylab = "Cortical Change",
+     main = "IL-6 vs Cortical",
+     pch = 19, col = "gray40")
+abline(lm(CORT_CNG3 ~ IL_6, data = data), col = "blue", lwd = 2)
+
+plot(data$MCP_1, data$CVLT_CNG3,
+     xlab = "MCP-1", ylab = "CVLT Change",
+     main = "MCP-1 vs CVLT",
+     pch = 19, col = "gray40")
+abline(lm(CVLT_CNG3 ~ MCP_1, data = data), col = "blue", lwd = 2)
+
+plot(data$MCP_1, data$CORT_CNG3,
+     xlab = "MCP-1", ylab = "Cortical Change",
+     main = "MCP-1 vs Cortical",
+     pch = 19, col = "gray40")
+abline(lm(CORT_CNG3 ~ MCP_1, data = data), col = "blue", lwd = 2)
+
+plot(data$log_IL6, data$CVLT_CNG3,
+     xlab = "log(IL-6)", ylab = "CVLT Change",
+     main = "log(IL-6) vs CVLT",
+     pch = 19, col = "gray40")
+abline(lm(CVLT_CNG3 ~ log_IL6, data = data), col = "blue", lwd = 2)
+
+plot(data$log_IL6, data$CORT_CNG3,
+     xlab = "log(IL-6)", ylab = "Cortical Change",
+     main = "log(IL-6) vs Cortical",
+     pch = 19, col = "gray40")
+abline(lm(CORT_CNG3 ~ log_IL6, data = data), col = "blue", lwd = 2)
+
+plot(data$log_MCP1, data$CVLT_CNG3,
+     xlab = "log(MCP-1)", ylab = "CVLT Change",
+     main = "log(MCP-1) vs CVLT",
+     pch = 19, col = "gray40")
+abline(lm(CVLT_CNG3 ~ log_MCP1, data = data), col = "blue", lwd = 2)
+
+plot(data$log_MCP1, data$CORT_CNG3,
+     xlab = "log(MCP-1)", ylab = "Cortical Change",
+     main = "log(MCP-1) vs Cortical",
+     pch = 19, col = "gray40")
+abline(lm(CORT_CNG3 ~ log_MCP1, data = data), col = "blue", lwd = 2)
+
+mtext("Scatterplots of Inflammatory Markers and Outcome Change Scores",
+      outer = TRUE, cex = 1.4)
+
+dev.off()
+
+# Reset plotting layout
+par(mfrow = c(1, 1))
+```
+
+
+```{r}
+# -----------------------
+#Correlation table
+# -----------------------
+correlation_table <- data.frame(
+  comparison = c(
+    "IL_6 vs CVLT_CNG3",
+    "IL_6 vs CORT_CNG3",
+    "MCP_1 vs CVLT_CNG3",
+    "MCP_1 vs CORT_CNG3",
+    "IL_6 vs MCP_1",
+    "CVLT_CNG3 vs CORT_CNG3",
+    "log_IL6 vs CVLT_CNG3",
+    "log_IL6 vs CORT_CNG3",
+    "log_MCP1 vs CVLT_CNG3",
+    "log_MCP1 vs CORT_CNG3",
+    "log_IL6 vs log_MCP1"
+  ),
+  correlation = c(
+    cor(data$IL_6, data$CVLT_CNG3, use = "complete.obs"),
+    cor(data$IL_6, data$CORT_CNG3, use = "complete.obs"),
+    cor(data$MCP_1, data$CVLT_CNG3, use = "complete.obs"),
+    cor(data$MCP_1, data$CORT_CNG3, use = "complete.obs"),
+    cor(data$IL_6, data$MCP_1, use = "complete.obs"),
+    cor(data$CVLT_CNG3, data$CORT_CNG3, use = "complete.obs"),
+    cor(data$log_IL6, data$CVLT_CNG3, use = "complete.obs"),
+    cor(data$log_IL6, data$CORT_CNG3, use = "complete.obs"),
+    cor(data$log_MCP1, data$CVLT_CNG3, use = "complete.obs"),
+    cor(data$log_MCP1, data$CORT_CNG3, use = "complete.obs"),
+    cor(data$log_IL6, data$log_MCP1, use = "complete.obs")
+  )
+)
+
+print(correlation_table)
+write.csv(correlation_table, file.path(results_tbl, "correlation_table.csv"), row.names = FALSE)
+
+```
+
