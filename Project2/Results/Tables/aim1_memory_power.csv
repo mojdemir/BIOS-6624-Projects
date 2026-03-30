@@ -1,4 +1,4 @@
-"scenario","pc","power"
-"Conservative",0.15,0.514087967831183
-"Moderate",0.2,0.765592609879172
-"Optimistic",0.25,0.924426737849463
+"outcome","scenario","rhoA","power"
+"Memory","Conservative",0.2,0.760056939747523
+"Memory","Moderate",0.25,0.919148758624113
+"Memory","Optimistic",0.3,0.982614827919561

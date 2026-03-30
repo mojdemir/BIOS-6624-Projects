@@ -1,0 +1,10 @@
+"outcome","scenario","ratio_label","n1","n2","n_ratio","rho1","rho2","delta_rho","power"
+"Memory","Small","Balanced (50/50)",88,87,1,0.1,0.25,0.15,0.172747731799816
+"Memory","Small","Moderate imbalance (60/40)",105,70,0.67,0.1,0.25,0.15,0.16756150248036
+"Memory","Small","High imbalance (70/30)",122,53,0.43,0.1,0.25,0.15,0.151175638155196
+"Memory","Moderate","Balanced (50/50)",88,87,1,0.1,0.35,0.25,0.41203941598728
+"Memory","Moderate","Moderate imbalance (60/40)",105,70,0.67,0.1,0.35,0.25,0.398026307974042
+"Memory","Moderate","High imbalance (70/30)",122,53,0.43,0.1,0.35,0.25,0.353725596370721
+"Memory","Large","Balanced (50/50)",88,87,1,0.1,0.45,0.35,0.711885744002357
+"Memory","Large","Moderate imbalance (60/40)",105,70,0.67,0.1,0.45,0.35,0.693461625713292
+"Memory","Large","High imbalance (70/30)",122,53,0.43,0.1,0.45,0.35,0.631328047083293

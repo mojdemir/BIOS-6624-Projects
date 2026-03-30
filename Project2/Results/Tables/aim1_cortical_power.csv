@@ -1,4 +1,4 @@
-"scenario","pc","power"
-"Conservative",0.3,0.985209504342385
-"Moderate",0.4,0.999921348176645
-"Optimistic",0.5,0.99999999110143
+"outcome","scenario","rhoA","power"
+"Cortical Thickness","Conservative",0.5,0.999999929917313
+"Cortical Thickness","Moderate",0.6,0.999999999999588
+"Cortical Thickness","Optimistic",0.65,1

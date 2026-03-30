@@ -1,0 +1,10 @@
+"outcome","scenario","ratio_label","n1","n2","n_ratio","rho1","rho2","delta_rho","power"
+"Cortical Thickness","Small","Balanced (50/50)",88,87,1,0.25,0.4,0.15,0.195562577177688
+"Cortical Thickness","Small","Moderate imbalance (60/40)",105,70,0.67,0.25,0.4,0.15,0.190041616808445
+"Cortical Thickness","Small","High imbalance (70/30)",122,53,0.43,0.25,0.4,0.15,0.171393207741252
+"Cortical Thickness","Moderate","Balanced (50/50)",88,87,1,0.25,0.5,0.25,0.486180534099417
+"Cortical Thickness","Moderate","Moderate imbalance (60/40)",105,70,0.67,0.25,0.5,0.25,0.470970345535512
+"Cortical Thickness","Moderate","High imbalance (70/30)",122,53,0.43,0.25,0.5,0.25,0.420667493369275
+"Cortical Thickness","Large","Balanced (50/50)",88,87,1,0.25,0.6,0.35,0.817751199774506
+"Cortical Thickness","Large","Moderate imbalance (60/40)",105,70,0.67,0.25,0.6,0.35,0.801751851699461
+"Cortical Thickness","Large","High imbalance (70/30)",122,53,0.43,0.25,0.6,0.35,0.744018479175633

@@ -1,0 +1,415 @@
+---
+title: "Power"
+output: html_document
+date: "2026-03-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+library(DiagrammeR)
+
+grViz("
+digraph conceptual_model {
+
+  graph [
+    layout = dot,
+    rankdir = TB,
+    bgcolor = 'white',
+    pad = 0.35,
+    nodesep = 0.45,
+    ranksep = 0.55,
+    splines = ortho
+  ]
+
+  node [
+    shape = box,
+    style = 'rounded,filled',
+    fontname = Helvetica,
+    fontsize = 18,
+    color = '#8A8A8A',
+    penwidth = 1.2,
+    margin = 0.20
+  ]
+
+  edge [
+    color = '#8A8A8A',
+    arrowsize = 0.8,
+    penwidth = 1.8
+  ]
+
+  # Main pathway nodes
+  PI [label = 'Peripheral Inflammation\\n(Eotaxin-1, MCP-1, TNF-α, IL-6)',
+      fillcolor = '#E8C3A0']
+
+  NI [label = 'Neuroinflammation in the Brain',
+      fillcolor = '#EED2B7']
+
+  AP [label = 'Amyloid Pathology (Aβ)',
+      fillcolor = '#EED2B7']
+
+  BS [label = 'Brain Structural Changes\\n(Hippocampal atrophy, cortical thinning)',
+      fillcolor = '#D8DEE8']
+
+  CD [label = 'Cognitive Decline\\n(Memory impairment)',
+      fillcolor = '#E6DDEC']
+
+  CP [label = 'Clinical Progression of aMCI',
+      fillcolor = '#E7D6D6']
+
+  AD [label = 'Alzheimer\\'s Disease',
+      fillcolor = '#C37C73',
+      fontcolor = 'white',
+      color = '#B06C64']
+
+  # Aim boxes
+  AIM1 [label = 'Aim 1\\nEvaluate longitudinal associations\\nbetween peripheral inflammatory\\nmarkers and:\\n• Cognitive decline\\n• Brain structural changes',
+        fillcolor = '#F5EFD8',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  AIM2 [label = 'Aim 2\\nPeripheral inflammation moderates\\nthe relationship between\\namyloid pathology and clinical\\nprogression of aMCI',
+        fillcolor = '#E3EAF5',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  # Main biological pathway
+  PI -> NI [color = '#C6864F']
+  NI -> AP [color = '#C6864F']
+  AP -> BS [color = '#8DA9D6']
+  BS -> CD [color = '#9A8DC2']
+  CD -> CP [color = '#C7A0B8']
+  CP -> AD [color = '#C96B5F']
+
+  # Aim 1: association targets
+  AIM1 -> BS [style = dashed, color = '#C6864F', penwidth = 1.6]
+  AIM1 -> CD [style = dashed, color = '#C6864F', penwidth = 1.6]
+
+  # Aim 2: moderation cue on pathology -> progression
+  AIM2 -> AP [style = dashed, color = '#7D95C9', penwidth = 1.6]
+  AIM2 -> CP [style = dashed, color = '#7D95C9', penwidth = 1.6]
+
+  # Layout helpers
+  { rank = same; AIM1; AP; AIM2 }
+
+  # Invisible edges for stable placement
+  AIM1 -> AP [style = invis]
+  AP -> AIM2 [style = invis]
+}
+")
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+library(DiagrammeR)
+
+grViz("
+digraph conceptual_model {
+
+  graph [
+    layout = dot,
+    rankdir = TB,
+    bgcolor = 'white',
+    pad = 0.35,
+    nodesep = 0.45,
+    ranksep = 0.55,
+    splines = ortho
+  ]
+
+  node [
+    shape = box,
+    style = 'rounded,filled',
+    fontname = Helvetica,
+    fontsize = 18,
+    color = '#9A9A9A',
+    penwidth = 1.2,
+    margin = 0.20
+  ]
+
+  edge [
+    color = '#8A8A8A',
+    arrowsize = 0.8,
+    penwidth = 1.8
+  ]
+
+  # =========================
+  # Main pathway nodes
+  # =========================
+  PI [label = 'Peripheral Inflammation\\n(Eotaxin-1, MCP-1, TNF-α, IL-6)',
+      fillcolor = '#E8C9A8']
+
+  NI [label = 'Neuroinflammation in the Brain',
+      fillcolor = '#EED8C2']
+
+  AP [label = 'Amyloid Pathology (Aβ)',
+      fillcolor = '#EED8C2']
+
+  BS [label = 'Brain Structural Changes\\n(Hippocampal atrophy, cortical thinning)',
+      fillcolor = '#DCE3EE']
+
+  CD [label = 'Cognitive Decline\\n(Memory impairment)',
+      fillcolor = '#E7E0EC']
+
+  CP [label = 'Clinical Progression of aMCI',
+      fillcolor = '#E6DDDD']
+
+  AD [label = 'Alzheimer\\'s Disease',
+      fillcolor = '#C4867D',
+      fontcolor = 'white',
+      color = '#B8756B']
+
+  # =========================
+  # Aim boxes
+  # =========================
+  AIM1 [label = 'Aim 1\\nEvaluate longitudinal associations\\nbetween peripheral inflammatory\\nmarkers and:\\n• Cognitive decline\\n• Brain structural changes',
+        fillcolor = '#F6F0D8',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  AIM2 [label = 'Aim 2\\nPeripheral inflammation moderates\\nthe relationship between\\namyloid pathology and clinical\\nprogression of aMCI',
+        fillcolor = '#E5EBF5',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  MOD [label = 'Moderation\\n(Aim 2)',
+       shape = plaintext,
+       fontsize = 14,
+       fontcolor = '#6E85B7']
+
+  # =========================
+  # Legend
+  # =========================
+  LEGEND [label = 'Legend\\l────►  Hypothesized biological pathway\\l- - - ►  Relationships tested in study aims\\l',
+          shape = box,
+          style = 'rounded,filled',
+          fillcolor = '#F7F7F7',
+          fontsize = 14,
+          margin = 0.18]
+
+  # Dummy nodes for legend arrows
+  L1A [label = '', shape = point, width = 0.01]
+  L1B [label = '', shape = point, width = 0.01]
+  L2A [label = '', shape = point, width = 0.01]
+  L2B [label = '', shape = point, width = 0.01]
+
+  # =========================
+  # Main biological pathway
+  # =========================
+  PI -> NI [color = '#C78958', penwidth = 2.0]
+  NI -> AP [color = '#C78958', penwidth = 2.0]
+  AP -> BS [color = '#9AB0D8', penwidth = 2.0]
+  BS -> CD [color = '#AE9DCD', penwidth = 2.0]
+  CD -> CP [color = '#C3A2B7', penwidth = 2.0]
+  CP -> AD [color = '#C96F63', penwidth = 2.0]
+
+  # =========================
+  # Aim 1 relationships
+  # =========================
+  AIM1 -> BS [style = dashed, color = '#C78958', penwidth = 1.6]
+  AIM1 -> CD [style = dashed, color = '#C78958', penwidth = 1.6]
+
+  # =========================
+  # Aim 2 moderation display
+  # =========================
+  AIM2 -> AP [style = dashed, color = '#8EA6D6', penwidth = 1.6]
+  AIM2 -> CP [style = dashed, color = '#8EA6D6', penwidth = 1.6]
+
+  # Optional direct conceptual relation for moderation target
+  AP -> CP [style = dashed, color = '#B8C4E3', penwidth = 1.3, constraint = false]
+
+  MOD -> AP [style = invis]
+  MOD -> CP [style = invis]
+
+  # =========================
+  # Legend arrows
+  # =========================
+  L1A -> L1B [color = '#7F7F7F', penwidth = 2.0]
+  L2A -> L2B [style = dashed, color = '#7F7F7F', penwidth = 1.6]
+
+  # =========================
+  # Layout
+  # =========================
+  { rank = same; AIM1; AP; AIM2 }
+  { rank = same; LEGEND; L1A; L1B; L2A; L2B }
+
+  # Invisible edges to stabilize layout
+  AIM1 -> AP [style = invis]
+  AP -> AIM2 [style = invis]
+  AD -> LEGEND [style = invis]
+  LEGEND -> L1A [style = invis]
+  L1B -> L2A [style = invis]
+}
+")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+```{r pressure, echo=FALSE}
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(rsvg)
+
+theoretical <- grViz("
+digraph conceptual_model {
+
+  graph [
+    layout = dot,
+    rankdir = TB,
+    bgcolor = 'white',
+    pad = 0.4,
+    nodesep = 0.45,
+    ranksep = 0.70,
+    splines = ortho
+  ]
+
+  node [
+    shape = box,
+    style = 'rounded,filled',
+    fontname = Helvetica,
+    fontsize = 18,
+    color = '#9A9A9A',
+    penwidth = 1.1,
+    margin = 0.20
+  ]
+
+  edge [
+    arrowsize = 0.8,
+    penwidth = 1.8,
+    color = '#8A8A8A'
+  ]
+
+  # -------------------------
+  # Title
+  # -------------------------
+  TITLE [label = 'Conceptual Framework: Peripheral Inflammation, Amyloid Pathology, and Cognitive Decline in aMCI',
+         shape = plaintext,
+         fontsize = 22,
+         fontcolor = '#3A3A3A']
+
+  # -------------------------
+  # Main pathway nodes
+  # -------------------------
+  PI [label = 'Peripheral Inflammation\\n(IL-6, TNF-α, MCP-1, Eotaxin-1)',
+      fillcolor = '#E6C9A8']
+
+  NI [label = 'Neuroinflammation in the Brain',
+      fillcolor = '#EBD8C3']
+
+  AP [label = 'Amyloid Pathology (Aβ)',
+      fillcolor = '#EBD8C3']
+
+  BS [label = 'Brain Structural Changes\\n(Change in AD-signature cortical thickness)',
+      fillcolor = '#DCE3EE']
+
+  CD [label = 'Episodic Memory Decline\\n(Change in episodic memory)',
+      fillcolor = '#E7E0EC']
+
+  CP [label = 'Clinical Progression of aMCI',
+      fillcolor = '#E6DDDD']
+
+  AD [label = 'Alzheimer\\'s Disease',
+      fillcolor = '#C58B83',
+      fontcolor = 'white',
+      color = '#B87A72']
+
+  # -------------------------
+  # Aim boxes
+  # -------------------------
+  AIM1 [label = 'Aim 1\\nTest whether peripheral inflammatory\\nmarkers predict longitudinal change in:\\n• Episodic memory\\n• AD-signature cortical thickness',
+        fillcolor = '#F5F0DD',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  AIM2 [label = 'Aim 2\\nTest whether peripheral inflammation\\nmoderates the relationship between\\namyloid pathology and longitudinal change in:\\n• Episodic memory\\n• AD-signature cortical thickness',
+        fillcolor = '#E7ECF5',
+        fontsize = 15,
+        penwidth = 1.0]
+
+  COV [label = 'Covariates\\nAge, sex, education, diagnostic group,\\nAPOE genotype, BMI, hypercholesterolemia,\\nNSAID use, immune-related health conditions',
+       fillcolor = '#F7F7F7',
+       fontsize = 13,
+       penwidth = 1.0]
+
+  # -------------------------
+  # Legend box
+  # -------------------------
+  LEG [label = 'Legend\\lSolid arrows: hypothesized biological pathways\\lOrange dashed arrows: associations tested in Aim 1\\lBlue dashed arrows: moderation tested in Aim 2\\l',
+       shape = box,
+       style = 'rounded,filled',
+       fillcolor = '#F7F7F7',
+       fontsize = 13,
+       margin = 0.16]
+
+  # -------------------------
+  # Main biological pathway
+  # -------------------------
+  PI -> NI [color = '#C78C58', penwidth = 2.0]
+  NI -> AP [color = '#C78C58', penwidth = 2.0]
+  AP -> BS [color = '#9EB2DA', penwidth = 2.0]
+  BS -> CD [color = '#AA9ECC', penwidth = 2.0]
+  CD -> CP [color = '#C2A7BA', penwidth = 2.0]
+  CP -> AD [color = '#C86D61', penwidth = 2.0]
+
+  # -------------------------
+  # Aim 1 links
+  # -------------------------
+  AIM1 -> BS [style = dashed, color = '#C78C58', penwidth = 1.6]
+  AIM1 -> CD [style = dashed, color = '#C78C58', penwidth = 1.6]
+
+  # -------------------------
+  # Aim 2 moderation links
+  # -------------------------
+  AIM2 -> AP [style = dashed, color = '#8EA6D6', penwidth = 1.6]
+  AIM2 -> BS [style = dashed, color = '#8EA6D6', penwidth = 1.6]
+  AIM2 -> CD [style = dashed, color = '#8EA6D6', penwidth = 1.6]
+
+  # -------------------------
+  # Layout helpers
+  # -------------------------
+  { rank = same; AIM1; AP; AIM2 }
+  { rank = same; LEG; COV }
+
+  TITLE -> PI [style = invis]
+  AIM1 -> AP [style = invis]
+  AP -> AIM2 [style = invis]
+  CP -> LEG [style = invis]
+}
+")
+```
+
+
+
+
+```{r}
+svg_txt <- export_svg(theoretical)  # returns SVG text
+rsvg_png(charToRaw(svg_txt),
+         file = "Figure_theoreticalfinal.png",
+         width = 3000, height = 4000)  # high-res
+```
+
+
+
+
+
+
+
+
+
+

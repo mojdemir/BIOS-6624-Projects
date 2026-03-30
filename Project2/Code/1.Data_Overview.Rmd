@@ -1,4 +1,5 @@
 
+
 ---
 title: "Data_Overview"
 author: "Moj"
@@ -240,6 +241,18 @@ par(mfrow = c(1, 1))
 # -----------------------
 #Correlation table
 # -----------------------
+# IL-6 vs CVLT
+t1 <- cor.test(data$IL_6, data$CVLT_CNG3, use = "complete.obs")
+# IL-6 vs Cortical Thickness
+t2 <- cor.test(data$IL_6, data$CORT_CNG3, use = "complete.obs")
+# MCP-1 vs CVLT
+t3 <- cor.test(data$MCP_1, data$CVLT_CNG3, use = "complete.obs")
+# MCP-1 vs Cortical Thickness
+t4 <- cor.test(data$MCP_1, data$CORT_CNG3, use = "complete.obs")
+# IL-6 vs MCP-1
+t5 <- cor.test(data$IL_6, data$MCP_1, use = "complete.obs")
+# CVLT vs Cortical Thickness
+t6 <- cor.test(data$CVLT_CNG3, data$CORT_CNG3, use = "complete.obs")
 correlation_table <- data.frame(
   comparison = c(
     "IL_6 vs CVLT_CNG3",
@@ -247,30 +260,14 @@ correlation_table <- data.frame(
     "MCP_1 vs CVLT_CNG3",
     "MCP_1 vs CORT_CNG3",
     "IL_6 vs MCP_1",
-    "CVLT_CNG3 vs CORT_CNG3",
-    "log_IL6 vs CVLT_CNG3",
-    "log_IL6 vs CORT_CNG3",
-    "log_MCP1 vs CVLT_CNG3",
-    "log_MCP1 vs CORT_CNG3",
-    "log_IL6 vs log_MCP1"
+    "CVLT_CNG3 vs CORT_CNG3"
   ),
-  correlation = c(
-    cor(data$IL_6, data$CVLT_CNG3, use = "complete.obs"),
-    cor(data$IL_6, data$CORT_CNG3, use = "complete.obs"),
-    cor(data$MCP_1, data$CVLT_CNG3, use = "complete.obs"),
-    cor(data$MCP_1, data$CORT_CNG3, use = "complete.obs"),
-    cor(data$IL_6, data$MCP_1, use = "complete.obs"),
-    cor(data$CVLT_CNG3, data$CORT_CNG3, use = "complete.obs"),
-    cor(data$log_IL6, data$CVLT_CNG3, use = "complete.obs"),
-    cor(data$log_IL6, data$CORT_CNG3, use = "complete.obs"),
-    cor(data$log_MCP1, data$CVLT_CNG3, use = "complete.obs"),
-    cor(data$log_MCP1, data$CORT_CNG3, use = "complete.obs"),
-    cor(data$log_IL6, data$log_MCP1, use = "complete.obs")
-  )
+  r = c(t1$estimate, t2$estimate, t3$estimate, t4$estimate, t5$estimate, t6$estimate),
+  lower = c(t1$conf.int[1], t2$conf.int[1], t3$conf.int[1], t4$conf.int[1], t5$conf.int[1], t6$conf.int[1]),
+  upper = c(t1$conf.int[2], t2$conf.int[2], t3$conf.int[2], t4$conf.int[2], t5$conf.int[2], t6$conf.int[2])
 )
 
 print(correlation_table)
 write.csv(correlation_table, file.path(results_tbl, "correlation_table.csv"), row.names = FALSE)
 
 ```
-

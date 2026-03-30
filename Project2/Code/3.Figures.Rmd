@@ -1,0 +1,297 @@
+---
+title: "Untitled"
+author: "Moj"
+date: "2026-03-24"
+output: html_document
+---
+
+# ============================================================
+# BIOS6624 Project 2 - Script 03: Figures
+#
+# Purpose:
+#   - Create figure for estimated power Aim 1 main-effect analyses
+#   - Create figure for estimated power for Aim 2 interaction analyses
+#
+# Outputs:
+#   Results/Figures/Figure1_Aim1_Power.png
+#   Results/Figures/Figure2_Aim2_Interaction_Power.png
+# ============================================================
+
+```{r cars}
+# ============================================================
+# Setup
+# ============================================================
+
+# Clear workspace for reproducibility
+rm(list = ls())
+
+# Load required packages
+library(powertools)
+library(tidyverse)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(scales)
+
+# ------------------------------------------------------------
+# Define output directories
+# ------------------------------------------------------------
+results_tbl <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Tables"
+results_fig <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Figures"
+output_dir  <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Output"
+
+# Create folders if they do not already exist
+dir.create(results_tbl, recursive = TRUE, showWarnings = FALSE)
+dir.create(results_fig, recursive = TRUE, showWarnings = FALSE)
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+```
+
+
+
+
+```{r}
+# ============================================================
+# Aim 1: Data assembly for plotting
+# ============================================================
+# Assumes aim1_memory_power and aim1_cortical_power have already
+# been created earlier in the script.
+
+# Combine the two datasets
+aim1_power_df <- bind_rows(
+  aim1_memory_power,
+  aim1_cortical_power
+) %>%
+  mutate(
+    scenario = factor(scenario, levels = c("Conservative", "Moderate", "Optimistic")),
+    outcome = factor(outcome, levels = c("Memory", "Cortical Thickness")),
+    scenario_y = if_else(outcome == "Memory", power + 0.045, power + 0.020),
+    power_y = if_else(outcome == "Memory", power - 0.035, power - 0.020)
+  )
+
+# Same publication-friendly colors used in Figure 2
+pub_colors <- c(
+  "Memory" = "#0072B2",
+  "Cortical Thickness" = "#D55E00"
+)
+
+p1 <- ggplot(
+  aim1_power_df,
+  aes(x = rhoA, y = power, color = outcome, group = outcome)
+) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3.2) +
+
+  # Scenario labels above points
+  geom_text(
+    aes(y = scenario_y, label = scenario),
+    size = 3.3,
+    fontface = "bold",
+    show.legend = FALSE
+  ) +
+
+  # Power labels below points
+  geom_text(
+    aes(y = power_y, label = scales::percent(power, accuracy = 1)),
+    size = 3.1,
+    color = "gray20",
+    fontface = "bold",
+    show.legend = FALSE
+  ) +
+
+  geom_hline(
+    yintercept = 0.80,
+    linetype = "dashed",
+    color = "gray35",
+    linewidth = 0.8
+  ) +
+  annotate(
+    "text",
+    x = 0.64,
+    y = 0.85,
+    label = "80% power threshold",
+    hjust = 1,
+    size = 3.7,
+    color = "gray30"
+  ) +
+  scale_color_manual(values = pub_colors) +
+  scale_y_continuous(
+    limits = c(0, 1.05),
+    breaks = seq(0, 1, by = 0.2),
+    expand = expansion(mult = c(0.04, 0.08))
+  ) +
+  coord_cartesian(xlim = c(0.18, 0.67), clip = "off") +
+  labs(
+    title = "Figure 1. Power to Detect Marker–Outcome Associations",
+    subtitle = paste0(
+      "Power across assumed marker–outcome correlations for memory and cortical thickness. ",
+      "Scenario labels are shown above points; estimated power is shown below points."
+    ),
+    x = "Assumed Correlation (r)",
+    y = "Statistical Power",
+    color = "Outcome",
+    caption = "Memory and cortical thickness curves are shown using the same outcome colors as in Figure 2."
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11),
+    plot.caption = element_text(size = 10, hjust = 0),
+    axis.text.x = element_text(angle = 15, hjust = 1),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+print(p1)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+aim2_power_df <- bind_rows(
+  aim2_memory_power,
+  aim2_cortical_power
+) %>%
+  mutate(
+    outcome = factor(outcome, levels = c("Memory", "Cortical Thickness")),
+    scenario = factor(scenario, levels = c("Small", "Moderate", "Large")),
+    scenario_label = case_when(
+      scenario == "Small" ~ "Small (\u0394\u03c1 = 0.15)",
+      scenario == "Moderate" ~ "Moderate (\u0394\u03c1 = 0.25)",
+      scenario == "Large" ~ "Large (\u0394\u03c1 = 0.35)"
+    ),
+    scenario_label = factor(
+      scenario_label,
+      levels = c(
+        "Small (\u0394\u03c1 = 0.15)",
+        "Moderate (\u0394\u03c1 = 0.25)",
+        "Large (\u0394\u03c1 = 0.35)"
+      )
+    ),
+    ratio_label = factor(
+      ratio_label,
+      levels = c(
+        "Balanced (50/50)",
+        "Moderate imbalance (60/40)",
+        "High imbalance (70/30)"
+      ),
+      labels = c(
+        "50/50 (A=0 / A=1)",
+        "60/40 (A=0 / A=1)",
+        "70/30 (A=0 / A=1)"
+      )
+    ),
+    power_label_y = if_else(
+      outcome == "Memory",
+      pmax(power - 0.10, 0.03),
+      pmin(power + 0.10, 1.02)
+    )
+  )
+
+pub_colors <- c(
+  "Memory" = "#0072B2",
+  "Cortical Thickness" = "#D55E00"
+)
+
+p2 <- ggplot(
+  aim2_power_df,
+  aes(
+    x = ratio_label,
+    y = power,
+    color = outcome,
+    group = outcome
+  )
+) +
+  geom_hline(
+    yintercept = 0.80,
+    linetype = "dashed",
+    color = "gray35",
+    linewidth = 0.8
+  ) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3.2) +
+  geom_text(
+    aes(
+      y = power_label_y,
+      label = scales::percent(power, accuracy = 1)
+    ),
+    size = 4.0,
+    color = "gray20",
+    fontface = "bold",
+    show.legend = FALSE
+  ) +
+  facet_wrap(~scenario_label, nrow = 1) +
+  scale_color_manual(values = pub_colors) +
+  scale_y_continuous(
+    limits = c(0, 1.05),
+    breaks = seq(0, 1, by = 0.2),
+    labels = scales::percent_format(accuracy = 1),
+    expand = expansion(mult = c(0.03, 0.10))
+  ) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Figure 2. Power to Detect Marker \u00d7 Amyloid Interaction",
+    subtitle = paste0(
+      "Power to detect differences in correlations between amyloid groups ",
+      "(A=0 vs A=1). Panels show interaction effect sizes defined by ",
+      "\u0394\u03c1 = \u03c1(A=1) - \u03c1(A=0); point labels show estimated power."
+    ),
+    x = "Amyloid Group Balance",
+    y = "Statistical Power",
+    color = "Outcome",
+    caption = "A=0: amyloid-negative; A=1: amyloid-positive"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, margin = margin(b = 6)),
+    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
+    plot.caption = element_text(size = 10, hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    strip.text = element_text(face = "bold", size = 12),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 12),
+    legend.text = element_text(size = 11),
+    panel.grid.minor = element_blank(),
+    panel.spacing = unit(1.2, "lines"),
+    plot.margin = margin(15, 25, 15, 15)
+  )
+
+print(p2)
+
+
+```
+
+
+
+```{r pressure, echo=FALSE}
+# Save Figure 1
+ggsave(
+  filename = file.path(results_fig, "Figure1_Aim1_Power.png"),
+  plot = p1,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+
+# Save Figure 2
+ggsave(
+  filename = file.path(results_fig, "Figure2_Aim2_Interaction_Power.png"),
+  plot = p2,
+  width = 12,
+  height = 7,
+  dpi = 300,
+  bg = "white"
+)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,379 @@
+---
+title: "Power_Analysis"
+author: "Moj"
+date: "2026-03-27"
+output: html_document
+---
+
+# ============================================================
+# BIOS6624 Project 2 - Script 02: Power Analysis
+#
+# Purpose:
+#   - Estimate power for Aim 1 main-effect analyses
+#   - Estimate power for Aim 2 interaction analyses
+#
+# Final strategy:
+#   - Aim 1: use corr.1samp
+#       * tests whether a marker-outcome correlation differs from 0
+#       * one marker at a time, consistent with preliminary data
+#
+#   - Aim 2: use corr.2samp
+#       * tests whether the marker-outcome correlation differs
+#         between amyloid groups
+#       * amyloid is dichotomized for power calculations only
+# Outputs:
+#   Results/Tables/aim1_memory_power.csv
+#   Results/Tables/aim1_cortical_power.csv
+#   Results/Tables/aim2_memory_power.csv
+#   Results/Tables/aim2_cortical_power.csv
+# ============================================================
+
+
+```{r cars}
+
+# -----------------------
+# Clean environment
+# -----------------------
+rm(list = ls())
+
+# -----------------------
+# Load libraries
+# -----------------------
+library(powertools)
+library(tidyverse)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(purrr)
+
+
+# -----------------------
+# Define directories
+# -----------------------
+results_tbl <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Tables"
+results_fig <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Results/Figures"
+output_dir  <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project2/Output"
+
+# Create folders if they don't exist
+dir.create(results_tbl, recursive = TRUE, showWarnings = FALSE)
+dir.create(results_fig, recursive = TRUE, showWarnings = FALSE)
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+
+
+```{r cars}
+# -----------------------
+# Global alpha
+# -----------------------
+alpha <- 0.05
+N_total <- 175
+
+# ============================================================
+# Aim 1: Power based on correlation (corr.1samp)
+# ============================================================
+#
+# Rationale:
+#   - Preliminary data provide correlation estimates
+#   - Power is approximated using one marker at a time tests
+#   - This is consistent with the final Aim 1 analysis plan
+#   - This also avoids instability from highly correlated markers
+#
+# Interpretation:
+#   - Tests H0: rho = 0
+#
+# Conservative-scenario logic:
+#   - If power is acceptable for the smallest plausible correlation,
+#     then power will be greater for the larger correlations
+# ============================================================
+
+# -----------------------
+# Memory outcome
+# -----------------------
+# Preliminary data suggested modest associations for memory.
+# Conservative scenario is listed first.
+
+aim1_memory_power <- tibble(
+  outcome = "Memory",
+  scenario = c("Conservative", "Moderate", "Optimistic"),
+  rhoA = c(0.20, 0.25, 0.30)
+) %>%
+  mutate(
+    power = map_dbl(
+      rhoA,
+      ~ corr.1samp(
+        N = N_total,
+        rho0 = 0,
+        rhoA = .x,
+        alpha = alpha,
+        power = NULL,
+        sides = 2,
+        v = FALSE
+      )
+    )
+  )
+
+# -----------------------
+# Cortical thickness outcome
+# -----------------------
+# Preliminary data suggested stronger associations for cortical thickness.
+# Conservative scenario is listed first.
+
+aim1_cortical_power <- tibble(
+  outcome = "Cortical Thickness",
+  scenario = c("Conservative", "Moderate", "Optimistic"),
+  rhoA = c(0.50, 0.60, 0.65)
+) %>%
+  mutate(
+    power = map_dbl(
+      rhoA,
+      ~ corr.1samp(
+        N = N_total,
+        rho0 = 0,
+        rhoA = .x,
+        alpha = alpha,
+        power = NULL,
+        sides = 2,
+        v = FALSE
+      )
+    )
+  )
+
+print(aim1_memory_power)
+print(aim1_cortical_power)
+
+```
+
+
+```{r cars}
+# ============================================================
+# Aim 2: Interaction power using correlation comparison
+# ============================================================
+#
+# RATIONALE
+# ------------------------------------------------------------
+# In the primary analysis, amyloid burden is modeled continuously.
+# For power estimation, amyloid is simplified to a binary grouping
+# variable:
+#
+#   A = 0  --> lower amyloid group
+#   A = 1  --> higher amyloid group
+#
+# This allows the interaction term (marker × amyloid) to be
+# approximated as a difference in correlations between the two
+# amyloid groups:
+#
+#   rho1 = correlation between inflammation marker and outcome
+#          when A = 0 (lower amyloid group)
+#
+#   rho2 = correlation between inflammation marker and outcome
+#          when A = 1 (higher amyloid group)
+#
+# The null hypothesis is:
+#
+#   H0: rho1 = rho2
+#
+# In other words, there is no interaction if the marker-outcome
+# association is the same in both amyloid groups.
+#
+# ------------------------------------------------------------
+# WHY USE delta_rho?
+# ------------------------------------------------------------
+# The interaction effect is represented by the absolute difference:
+#
+#   delta_rho = |rho2 - rho1|
+#
+# Here, higher amyloid is hypothesized to strengthen the adverse
+# association between inflammation and outcome, so rho2 is set to
+# be more negative than rho1:
+#
+#   rho2 = rho1 - delta_rho
+#
+# Using delta_rho makes the scenario labels:
+#
+#   Small     = small interaction effect
+#   Moderate  = moderate interaction effect
+#   Large     = large interaction effect
+#
+# ------------------------------------------------------------
+# DESIGN NOTE ON GROUP SIZE IMBALANCE
+# ------------------------------------------------------------
+# Amyloid status is not used to stratify recruitment, so equal
+# group sizes cannot be assumed. Because unequal group sizes reduce
+# power, we evaluate three plausible allocation scenarios:
+#
+#   Balanced (50/50)              --> best-case
+#   Moderate imbalance (60/40)
+#   High imbalance (70/30)        --> conservative case
+#
+# If power is adequate under the most imbalanced scenario, it will
+# be at least as good under more balanced allocations.
+# ============================================================
+
+
+# -----------------------
+# Global settings
+# -----------------------
+N_total <- 175
+alpha <- 0.05
+
+
+# ------------------------------------------------------------
+# Group size scenarios
+# ------------------------------------------------------------
+# n1 = A = 0 group
+# n2 = A = 1 group
+#
+# n_ratio = n2 / n1
+
+ratio_tbl <- tibble(
+  ratio_label = c(
+    "Balanced (50/50)",
+    "Moderate imbalance (60/40)",
+    "High imbalance (70/30)"
+  ),
+  n_ratio = c(1.00, 0.67, 0.43)
+) %>%
+  mutate(
+    n1 = round(N_total / (1 + n_ratio)),
+    n2 = N_total - n1
+  )
+
+
+# ------------------------------------------------------------
+# Memory outcome
+# ------------------------------------------------------------
+# Preliminary data suggested modest negative associations between
+# inflammatory markers and memory change. To remain conservative,
+# the lower amyloid group is assigned a modest baseline correlation.
+#
+# rho1 = baseline correlation in A = 0
+# rho2 = rho1 - delta_rho
+
+aim2_memory_power <- expand_grid(
+  outcome = "Memory",
+  scenario = c("Small", "Moderate", "Large"),
+  ratio_tbl
+) %>%
+  mutate(
+    rho1 = -0.10,
+    delta_rho = case_when(
+      scenario == "Small" ~ 0.15,
+      scenario == "Moderate" ~ 0.25,
+      scenario == "Large" ~ 0.35
+    ),
+    rho2 = rho1 - delta_rho,
+    power = pmap_dbl(
+      list(n1, n_ratio, rho1, rho2),
+      function(n1, n_ratio, rho1, rho2) {
+        corr.2samp(
+          n1 = n1,
+          n.ratio = n_ratio,
+          rho1 = rho1,
+          rho2 = rho2,
+          alpha = alpha,
+          power = NULL,
+          sides = 2,
+          v = FALSE
+        )
+      }
+    )
+  ) %>%
+  select(
+    outcome, scenario, ratio_label,
+    n1, n2, n_ratio,
+    rho1, rho2, delta_rho, power
+  )
+
+
+# ------------------------------------------------------------
+# Cortical thickness outcome
+# ------------------------------------------------------------
+# Preliminary data suggested stronger negative associations between
+# inflammatory markers and cortical thickness than for memory.
+# To remain conservative, the lower amyloid group is assigned a
+# weaker baseline correlation than the overall pilot estimate.
+#
+# rho1 = baseline correlation in A = 0
+# rho2 = rho1 - delta_rho
+
+aim2_cortical_power <- expand_grid(
+  outcome = "Cortical Thickness",
+  scenario = c("Small", "Moderate", "Large"),
+  ratio_tbl
+) %>%
+  mutate(
+    rho1 = -0.25,
+    delta_rho = case_when(
+      scenario == "Small" ~ 0.15,
+      scenario == "Moderate" ~ 0.25,
+      scenario == "Large" ~ 0.35
+    ),
+    rho2 = rho1 - delta_rho,
+    power = pmap_dbl(
+      list(n1, n_ratio, rho1, rho2),
+      function(n1, n_ratio, rho1, rho2) {
+        corr.2samp(
+          n1 = n1,
+          n.ratio = n_ratio,
+          rho1 = rho1,
+          rho2 = rho2,
+          alpha = alpha,
+          power = NULL,
+          sides = 2,
+          v = FALSE
+        )
+      }
+    )
+  ) %>%
+  select(
+    outcome, scenario, ratio_label,
+    n1, n2, n_ratio,
+    rho1, rho2, delta_rho, power
+  )
+
+
+# ------------------------------------------------------------
+# Combine results
+# ------------------------------------------------------------
+aim2_power_results <- bind_rows(
+  aim2_memory_power,
+  aim2_cortical_power
+)
+
+print(aim2_power_results)
+
+```
+
+
+
+```{r cars}
+# ============================================================
+# Save tables
+# ============================================================
+
+write.csv(
+  aim1_memory_power,
+  file.path(results_tbl, "aim1_memory_power.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  aim1_cortical_power,
+  file.path(results_tbl, "aim1_cortical_power.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  aim2_memory_power,
+  file.path(results_tbl, "aim2_memory_power.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  aim2_cortical_power,
+  file.path(results_tbl, "aim2_cortical_power.csv"),
+  row.names = FALSE
+)
+```
+
