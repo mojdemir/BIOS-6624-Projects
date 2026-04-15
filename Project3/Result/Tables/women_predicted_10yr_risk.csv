@@ -1,0 +1,13 @@
+risk_profile,age,sex_label,prob_pct
+40 Current_smoker_only,40,Women,0.4827381822
+40 Diabetes_only,40,Women,0.8512627155
+40 High_BP_only,40,Women,1.3440092124
+40 High_BP_plus_Diabetes,40,Women,2.3621814449
+50 Current_smoker_only,50,Women,0.9786884753
+50 Diabetes_only,50,Women,1.72253282
+50 High_BP_only,50,Women,2.712660352
+50 High_BP_plus_Diabetes,50,Women,4.7424490005
+60 Current_smoker_only,60,Women,1.9790710819
+60 Diabetes_only,60,Women,3.4698091096
+60 High_BP_only,60,Women,5.4361209532
+60 High_BP_plus_Diabetes,60,Women,9.4028667571

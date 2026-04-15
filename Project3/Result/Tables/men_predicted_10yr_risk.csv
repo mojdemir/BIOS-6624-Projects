@@ -1,0 +1,13 @@
+risk_profile,age,sex_label,prob_pct
+40 Current_smoker_only,40,Men,0.7299903904
+40 Diabetes_only,40,Men,1.8133880141
+40 High_BP_only,40,Men,1.4411353626
+40 High_BP_plus_Diabetes,40,Men,6.7393715851
+50 Current_smoker_only,50,Men,1.3826141757
+50 Diabetes_only,50,Men,3.4177686278
+50 High_BP_only,50,Men,2.7207621647
+50 High_BP_plus_Diabetes,50,Men,12.417188002
+60 Current_smoker_only,60,Men,2.6109710319
+60 Diabetes_only,60,Men,6.394626484
+60 High_BP_only,60,Men,5.106785817
+60 High_BP_plus_Diabetes,60,Men,22.271414963
