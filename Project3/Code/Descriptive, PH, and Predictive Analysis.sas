@@ -209,6 +209,16 @@ proc freq data=work.baseline;
            prevchd yesnofmt.;
 run;
 
+/*number of people died*/
+data work.baseline;
+    set work.baseline;
+    death10 = (death = 1 and timedth <= 3650);
+run;
+
+proc freq data=work.baseline;
+    tables death10*sex;
+run;
+
 title "Missingness by Sex";
 proc means data=work.baseline n nmiss;
     class sex;
@@ -231,34 +241,40 @@ run;
 /*==============================*
  | 7. KAPLAN-MEIER CURVES
  *==============================*/
-ods graphics on; 
+ods graphics on;
 ods listing gpath="&results_dir.";
 
+/*------------------------------*
+ | KM Curve: Men
+ *------------------------------*/
 ods graphics / reset
     width=8in
     height=6in
     imagename='KM_stroke_men'
-    imagefmt=png
-    image_dpi=300;
+    outputfmt=png;
 
-title "Kaplan-Meier Survival Curve: Men";
-proc lifetest data=work.baseline
-    plots=survival(atrisk=0 to 3650 by 730);
+title "Kaplan–Meier Survival Curve for 10-Year Stroke-Free Survival: Men";
+
+proc lifetest data=work.complete_case
+    plots=survival(atrisk=0 to 3650 by 730 cl);
     where sex = 1;
     time follow10*stroke10(0);
     format sex sexfmt.;
 run;
 
+/*------------------------------*
+ | KM Curve: Women
+ *------------------------------*/
 ods graphics / reset
     width=8in
     height=6in
     imagename='KM_stroke_women'
-    imagefmt=png
-    image_dpi=300;
+    outputfmt=png;
 
-title "Kaplan-Meier Survival Curve: Women";
-proc lifetest data=work.baseline
-    plots=survival(atrisk=0 to 3650 by 730);
+title "Kaplan–Meier Survival Curve for 10-Year Stroke-Free Survival: Women";
+
+proc lifetest data=work.complete_case
+    plots=survival(atrisk=0 to 3650 by 730 cl);
     where sex = 2;
     time follow10*stroke10(0);
     format sex sexfmt.;
@@ -267,7 +283,7 @@ run;
 title;
 
 /*==============================*
- | 11. SEX-SPECIFIC COX MODELS
+ | 8. SEX-SPECIFIC COX MODELS
  *==============================*/
 /*
 Backward selection approach:
@@ -344,7 +360,7 @@ proc phreg data=work.complete_case plots(overlay)=survival;
 run;
 
  /*==============================*
- | 12. 10-YEAR PREDICTED RISKS
+ | 9. 10-YEAR PREDICTED RISKS
  *==============================*/
 /*
 Predicted 10-year stroke risk for illustrative profiles.
@@ -476,63 +492,104 @@ title "Predicted 10-Year Stroke Risk for Illustrative Female Profiles";
 proc print data=work.women_pred_table label noobs;
     format _numeric_ 6.2;
 run;
-
-
-/*==============================*
- | 13. FIGURE FROM MODEL OUTPUTS
- *==============================*/
-/* Build the figure directly from model outputs instead of hard-coding values */
-data work.table3_plot;
+/*==============================================================*
+ | Figure 1: Predicted 10-Year Stroke Probability by Age and Sex
+ *==============================================================*/
+data work.figure1_long;
     set work.men_pred_10yr work.women_pred_10yr;
-    length sex $6 profile $25 prob_label $8;
+    length sex $6 profile_id $6;
+
     sex = sex_label;
 
-    select (risk_profile);
-        when ('High_BP_only')          profile = 'HighBP';
-        when ('Diabetes_only')         profile = 'Diabetes';
-        when ('High_BP_plus_Diabetes') profile = 'HighBP_Diabetes';
-        when ('Current_smoker_only')   profile = 'Smoker';
-        otherwise                      profile = risk_profile;
-    end;
-
-    if age = 60 then prob_label = strip(put(round(prob_pct, 0.1), 5.1));
+    if index(risk_profile, 'High_BP_only') > 0 then profile_id = 'bp';
+    else if index(risk_profile, 'Diabetes_only') > 0 then profile_id = 'dm';
+    else if index(risk_profile, 'High_BP_plus_Diabetes') > 0 then profile_id = 'bpdm';
+    else if index(risk_profile, 'Current_smoker_only') > 0 then profile_id = 'smk';
 run;
 
-proc format;
-    value $plotproffmt
-        'HighBP'           = 'High BP only'
-        'Diabetes'         = 'Diabetes only'
-        'HighBP_Diabetes'  = 'High BP + Diabetes'
-        'Smoker'           = 'Current smoker only';
+/* Sort before transpose */
+proc sort data=work.figure1_long;
+    by sex age;
 run;
 
+/* Wide format: one row per sex-age, one column per line */
+proc transpose data=work.figure1_long
+    out=work.figure1_wide(drop=_name_);
+    by sex age;
+    id profile_id;
+    var prob_pct;
+run;
+
+/* Format predicted probabilities to 1 decimal place */
+data work.figure1_wide;
+    set work.figure1_wide;
+    format bp dm bpdm smk 5.1;
+run;
+
+/* Save figure to Results folder */
+ods graphics on;
 ods listing gpath="&results_dir.";
-ods graphics / reset width=10in height=5in imagename='Figure_Table3' outputfmt=png;
 
-title "Figure 1. Predicted 10-Year Probability of Incident Stroke (%) by Age, Sex, and Risk Profile Derived from Sex-Specific Cox Proportional Hazard Models";
-proc sgpanel data=work.table3_plot;
-    panelby sex / columns=2 spacing=10 novarname;
+ods graphics / reset
+    width=10in
+    height=5in
+    imagename='Figure1_Predicted_Stroke_Risk'
+    outputfmt=png;
 
-    series x=age y=prob_pct / group=profile markers
-        datalabel=prob_label
-        datalabelpos=right
+title "Figure 1. Predicted 10-Year Probability of Incident Stroke (%) by Age, Sex, and Risk Profile Derived from Sex-Specific Cox Proportional Hazards Models";
+
+proc sgpanel data=work.figure1_wide;
+    panelby sex / columns=2 novarname spacing=10;
+
+    /* High BP only */
+    series x=age y=bp /
+        name='bp'
+        legendlabel='High BP only'
+        datalabel=bp
         datalabelattrs=(size=8)
-        lineattrs=(thickness=2)
-        markerattrs=(size=9);
+        lineattrs=(color=blue thickness=2)
+        markerattrs=(color=blue symbol=circlefilled size=8);
+
+    /* Diabetes only */
+    series x=age y=dm /
+        name='dm'
+        legendlabel='Diabetes only'
+        datalabel=dm
+        datalabelattrs=(size=8)
+        lineattrs=(color=red thickness=2)
+        markerattrs=(color=red symbol=circlefilled size=8);
+
+    /* High BP + Diabetes */
+    series x=age y=bpdm /
+        name='bpdm'
+        legendlabel='High BP + Diabetes'
+        datalabel=bpdm
+        datalabelattrs=(size=8)
+        lineattrs=(color=green thickness=2)
+        markerattrs=(color=green symbol=circlefilled size=8);
+
+    /* Current smoker only */
+    series x=age y=smk /
+        name='smk'
+        legendlabel='Current smoker only'
+        datalabel=smk
+        datalabelattrs=(size=8)
+        lineattrs=(color=brown thickness=2)
+        markerattrs=(color=brown symbol=circlefilled size=8);
 
     colaxis label='Age (years)' values=(40 50 60);
     rowaxis label='Predicted 10-Year Stroke Probability (%)' grid;
-    keylegend / title='Risk Profile' position=bottom;
 
-    format profile $plotproffmt.;
+    keylegend 'bp' 'dm' 'bpdm' 'smk' /
+        title='Risk Profile'
+        position=bottom;
 run;
 
 title;
-
 /*==============================*
- | 14. LONGITUDINAL CHANGE
+ | 10. LONGITUDINAL CHANGE
  *==============================*/
-data work.long_desc;
+data work.long_desc; 
     set work.frmgham;
     where period in (1,2,3);
 run;
@@ -573,7 +630,7 @@ data work.smok_prev_plot;
     set work.smok_prev;
     where cursmoke = 1;
     outcome = 'Smoking prevalence (%)';
-value = percent;
+    value = percent;
     keep sex period outcome value;
 run;
 
@@ -608,18 +665,40 @@ proc print data=work.smok_prev_plot noobs;
     format sex sexfmt. period periodfmt. value 6.2;
 run;
 
-title "Figure 2. Changes in systolic blood pressure, diabetes, and smoking across exam periods by sex";
+/* Save Figure 2 to Results folder */
+ods graphics on;
+ods listing gpath="&results_dir.";
+
+ods graphics / reset
+    width=11in
+    height=4.5in
+    imagename='Figure2_Changes_Risk_Factors'
+    outputfmt=png;
+
+title "Figure 2. Trends in Systolic Blood Pressure, Diabetes Prevalence, and Smoking by Sex Across Examination Periods 1–3";
+
 proc sgpanel data=work.trend_all;
-    panelby outcome / columns=3 onepanel novarname;
-    series x=period y=value / group=sex markers datalabel=value lineattrs=(thickness=2);
-    colaxis label='Exam period' integer;
-    rowaxis grid;
-    format sex sexfmt. period periodfmt. value 6.2;
+    panelby outcome / columns=3 onepanel novarname spacing=8;
+
+    series x=period y=value /
+        group=sex
+        markers
+        datalabel=value
+        datalabelattrs=(size=7)
+        lineattrs=(thickness=2)
+        markerattrs=(size=8);
+
+    colaxis label='Examination period' integer values=(1 2 3);
+    rowaxis display=(nolabel) grid;
+    keylegend / title='Sex' position=bottom;
+
+    format sex sexfmt. period 1. value 6.1;
 run;
+
 title;
 
 /*==============================*
- | 15. EXPORT KEY TABLES
+ | 11. EXPORT KEY TABLES
  *==============================*/
 proc export data=work.men_pred_10yr
     outfile="&results_dir./men_predicted_10yr_risk.csv"
@@ -642,7 +721,7 @@ proc export data=work.smok_prev
 run;
 
 /*==============================*
- | 16. CLEAN FINISH
+ | 12. CLEAN FINISH
  *==============================*/
 title;
 footnote;
