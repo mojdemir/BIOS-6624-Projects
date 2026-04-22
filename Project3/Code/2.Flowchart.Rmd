@@ -1,0 +1,89 @@
+
+
+
+
+
+```{r}
+# Flowchart
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(rsvg)
+
+flowchart <- grViz("
+digraph flowchart {
+
+  graph [layout = dot,
+         rankdir = TB,
+         label = 'Figure S1. Flowchart of Study Population and Analytic Pipeline\\nFramingham Heart Study',
+         labelloc = t,
+         fontsize = 20,
+         fontname = Helvetica]
+
+  node [shape = box,
+        style = 'rounded,filled',
+        fontname = Helvetica,
+        fontsize = 13,
+        color = '#1B3A4B',
+        fillcolor = '#EEF3F6',
+        penwidth = 1.2]
+
+  edge [color = '#1B3A4B',
+        penwidth = 1.1,
+        arrowsize = 0.8]
+
+  # Main nodes
+  A [label = 'Framingham Heart Study longitudinal dataset\\nPeriod 1: n = 4,434\\nPeriod 2: n = 3,930\\nPeriod 3: n = 3,263']
+
+  B [label = 'Baseline sample (Period 1)\\nn = 4,434']
+
+  X1 [label = 'Excluded: prevalent stroke at baseline\\n(PREVSTRK = 1)\\n n = 32',
+      fillcolor = '#F4F6F7',
+      color = '#7B8A8B']
+
+  C [label = 'Final baseline analytic sample\\nFree of stroke at baseline\\nn = 4,402']
+
+  D [label = 'Sex-stratified analytic sample\\nMen: n = 1,930\\nWomen: n = 2,472']
+
+  E [label = 'Define 10-year stroke outcome\\nFollow-up truncated at 10 years (3,650 days)\\nIncident stroke within 10 years']
+
+  F [label = 'Baseline characteristics by sex\\n(N = 4,402)']
+
+  X2 [label = 'Excluded for complete-case analysis\\nMen: n = 33\\nWomen: n = 94',
+      fillcolor = '#F4F6F7',
+      color = '#7B8A8B']
+
+  G [label = 'Complete-case sample for Kaplan-Meier curves\\nand Cox models\\nMen: n = 1,897\\nWomen: n = 2,378']
+
+  H [label = 'Sex-specific Cox proportional hazards models\\nCandidate variables: age, systolic BP, diabetes,\\nBP medication, cholesterol, BMI, prevalent CHD\\nBackward selection with age, systolic BP,\\nand diabetes forced into all models']
+
+  I [label = 'Predicted 10-year stroke risk\\nIllustrative profiles by sex\\nAges 40, 50, and 60\\nProfiles: high BP only, diabetes only,\\nhigh BP + diabetes, current smoker only']
+
+  J [label = 'Descriptive longitudinal assessment\\nRisk factor changes across Periods 1-3\\nBlood pressure, diabetes, and smoking']
+
+  # Main flow
+  A -> B
+  B -> C
+  C -> D -> E -> F -> G -> H -> I
+  A -> J
+
+  # Exclusion branches
+  B -> X1
+  F -> X2
+
+  # Layout hints
+  {rank=same; B X1}
+  {rank=same; F X2}
+}
+")
+
+flowchart
+```
+
+
+
+```{r}
+svg_txt <- export_svg(flowchart)  # returns SVG text
+rsvg_png(charToRaw(svg_txt),
+         file = "Project3_Flowchart.png",
+         width = 3000, height = 4000)  # high-res
+```
