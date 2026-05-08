@@ -1,0 +1,219 @@
+
+# Figure: Method Performance Heatmap
+
+```{r heatmap-figure, fig.width=9, fig.height=6, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+heatmap_data <- all_results %>%
+  group_by(n, rho, method) %>%
+  summarize(
+    power = mean(selected[variable %in% true_vars]),
+    null_selection = mean(selected[variable %in% null_vars]),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(power, null_selection),
+    names_to = "metric",
+    values_to = "value"
+  ) %>%
+  mutate(
+    metric = dplyr::recode(
+      metric,
+      power = "Power",
+      null_selection = "Null Predictor Selection"
+    ),
+    rho = factor(rho),
+    n = factor(n),
+    method = factor(
+      method,
+      levels = c(
+        "Backward p-value",
+        "AIC",
+        "BIC",
+        "LASSO lambda.1se",
+        "LASSO lambda.min",
+        "Elastic Net lambda.1se",
+        "Elastic Net lambda.min"
+      ),
+      labels = c(
+        "Backward",
+        "AIC",
+        "BIC",
+        "LASSO 1se",
+        "LASSO min",
+        "EN 1se",
+        "EN min"
+      )
+    )
+  )
+
+heatmap_plot <- ggplot(heatmap_data, aes(x = method, y = rho, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(value, 2)), size = 3) +
+  facet_grid(metric ~ n) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  labs(
+    title = "Figure 1. Variable Selection Performance Across Sample Size and Predictor Correlation",
+    subtitle = "Power for true predictors and selection frequency of null predictors",
+    x = "Method",
+    y = "Correlation (rho)",
+    fill = "Value"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10)
+  )
+
+heatmap_plot
+
+ggsave(
+  filename = file.path(results_fig, "Figure1_Heatmap_Performance.png"),
+  plot = heatmap_plot,
+  width = 11,
+  height = 6
+)
+```
+
+**Figure:** Heatmap showing power and false positive rates for each method across sample sizes and correlation levels. Darker colors indicate higher values.
+
+
+
+
+# Figure: Method Performance Heatmap
+
+# Figure: Method Performance Heatmap
+
+
+```{r figure2-power-variable, fig.width=10, fig.height=7, message=FALSE, warning=FALSE}
+# Figure 2: Power by Variable (X1-X5)
+
+
+library(dplyr)
+library(ggplot2)
+
+power_variable_data <- all_results %>%
+  filter(variable %in% true_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    power = mean(selected),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    rho = factor(rho),
+    n = factor(n),
+    variable = factor(variable, levels = true_vars),
+    method = factor(
+      method,
+      levels = c(
+        "Backward p-value",
+        "AIC",
+        "BIC",
+        "LASSO lambda.min",
+        "LASSO lambda.1se",
+        "Elastic Net lambda.min",
+        "Elastic Net lambda.1se"
+      )
+    )
+  )
+
+power_plot <- ggplot(
+  power_variable_data,
+  aes(x = variable, y = power, color = method, group = method)
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  facet_grid(rho ~ n) +
+  labs(
+    title = "Figure 2. Variable-level power across sample size and predictor correlation",
+    x = "True Predictor",
+    y = "Power (True Positive Rate)",
+    color = "Method"
+  ) +
+  ylim(0, 1) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+
+power_plot
+
+ggsave(
+  filename = file.path(results_fig, "Figure2_Power_By_Variable.png"),
+  plot = power_plot,
+  width = 10,
+  height = 7
+)
+
+```
+
+
+
+
+
+
+```{r fig.width=10, fig.height=7, message=FALSE, warning=FALSE}
+# Figure 3: Bias by Variable (X1-X5)
+
+library(dplyr)
+library(ggplot2)
+
+bias_variable_data <- all_results %>%
+  filter(variable %in% true_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    bias = mean(bias_uncond, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    rho = factor(rho),
+    n = factor(n),
+    variable = factor(variable, levels = true_vars),
+    method = factor(
+      method,
+      levels = c(
+        "Backward p-value",
+        "AIC",
+        "BIC",
+        "LASSO lambda.min",
+        "LASSO lambda.1se",
+        "Elastic Net lambda.min",
+        "Elastic Net lambda.1se"
+      )
+    )
+  )
+
+bias_plot <- ggplot(
+  bias_variable_data,
+  aes(x = variable, y = bias, color = method, group = method)
+) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  facet_grid(rho ~ n) +
+  labs(
+    title = "Figure 3. Variable-level unconditional bias across sample size and predictor correlation",
+    x = "True Predictor",
+    y = "Unconditional Bias",
+    color = "Method"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+
+bias_plot
+
+ggsave(
+  filename = file.path(results_fig, "Figure3_Bias_By_Variable.png"),
+  plot = bias_plot,
+  width = 10,
+  height = 7
+)
+```

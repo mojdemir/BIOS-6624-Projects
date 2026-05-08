@@ -1,0 +1,152 @@
+---
+title: "Untitled"
+author: "Moj"
+date: "2026-05-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#table 1
+
+library(gt)
+library(dplyr)
+library(tidyr)
+table1_inclusion <- all_results %>%
+  mutate(
+    truth = ifelse(variable %in% true_vars, "TRUE", "FALSE")
+  ) %>%
+  group_by(method, n, rho, truth, sim_id) %>%
+  summarize(
+    n_selected = sum(selected),
+    .groups = "drop"
+  ) %>%
+  group_by(method, n, rho, truth) %>%
+  summarize(
+    percent_selected = mean(n_selected > 0) * 100,
+    mean_selected = mean(n_selected),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(percent_selected, mean_selected),
+    names_to = "summary",
+    values_to = "value"
+  ) %>%
+  mutate(
+    summary = recode(
+      summary,
+      percent_selected = "% > 0 selected",
+      mean_selected = "Mean # selected"
+    ),
+    setting = paste0("N=", n, ", rho=", rho, ", ", truth)
+  ) %>%
+  select(method, summary, setting, value) %>%
+  pivot_wider(
+    names_from = setting,
+    values_from = value
+  )
+
+table1_inclusion %>%
+  gt(rowname_col = "summary", groupname_col = "method") %>%
+  
+  tab_header(
+    title = md("**Table 1. Inclusion of Truly and Falsely Associated Variables**"),
+    subtitle = "Percent of simulations selecting variables and average number selected"
+  ) %>%
+  
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 1
+  ) %>%
+  
+  cols_label(
+    method = "Method"
+  ) %>%
+  
+  tab_options(
+    table.font.size = 12,
+    heading.title.font.size = 14,
+    heading.subtitle.font.size = 11,
+    data_row.padding = px(4)
+  )
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+#table 2
+table2_true_vars <- all_results %>%
+  filter(variable %in% true_vars) %>%
+  group_by(method, n, rho, variable, beta_true) %>%
+  summarize(
+    selection_percent = mean(selected) * 100,
+    bias = mean(bias_uncond, na.rm = TRUE),
+    coverage_percent = mean(covered, na.rm = TRUE) * 100,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Beta = round(beta_true, 2),
+    setting = paste0("N=", n, ", rho=", rho)
+  ) %>%
+  select(
+    method,
+    variable,
+    Beta,
+    setting,
+    selection_percent,
+    bias,
+    coverage_percent
+  )
+
+table2_true_vars %>%
+  gt(groupname_col = "method") %>%
+  
+  tab_header(
+    title = md("**Table 2. Selection Frequency, Bias, and Coverage for Truly Associated Variables**"),
+    subtitle = "Results for variables X1 through X5"
+  ) %>%
+  
+  tab_spanner(
+    label = "Performance Measures",
+    columns = c(selection_percent, bias, coverage_percent)
+  ) %>%
+  
+  cols_label(
+    variable = "Variable",
+    Beta = "True Beta",
+    setting = "Simulation Setting",
+    selection_percent = "Selection %",
+    bias = "Bias",
+    coverage_percent = "Coverage %"
+  ) %>%
+  
+  fmt_number(
+    columns = c(selection_percent, coverage_percent),
+    decimals = 1
+  ) %>%
+  
+  fmt_number(
+    columns = bias,
+    decimals = 2
+  ) %>%
+  
+  tab_options(
+    table.font.size = 12,
+    heading.title.font.size = 14,
+    heading.subtitle.font.size = 11,
+    data_row.padding = px(4)
+  )
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,631 @@
+"n","rho","method","variable","type_I_error"
+250,0,"AIC","X10",0.0563
+250,0,"AIC","X11",0.0518
+250,0,"AIC","X12",0.056
+250,0,"AIC","X13",0.05
+250,0,"AIC","X14",0.0539
+250,0,"AIC","X15",0.0595
+250,0,"AIC","X16",0.0606
+250,0,"AIC","X17",0.057
+250,0,"AIC","X18",0.0573
+250,0,"AIC","X19",0.0563
+250,0,"AIC","X20",0.0578
+250,0,"AIC","X6",0.0591
+250,0,"AIC","X7",0.0548
+250,0,"AIC","X8",0.0554
+250,0,"AIC","X9",0.0563
+250,0,"BIC","X10",0.0216
+250,0,"BIC","X11",0.0205
+250,0,"BIC","X12",0.0221
+250,0,"BIC","X13",0.0187
+250,0,"BIC","X14",0.0213
+250,0,"BIC","X15",0.022
+250,0,"BIC","X16",0.0236
+250,0,"BIC","X17",0.0207
+250,0,"BIC","X18",0.0199
+250,0,"BIC","X19",0.0218
+250,0,"BIC","X20",0.0243
+250,0,"BIC","X6",0.0222
+250,0,"BIC","X7",0.0199
+250,0,"BIC","X8",0.0228
+250,0,"BIC","X9",0.0216
+250,0,"Backward p-value","X10",0.0574
+250,0,"Backward p-value","X11",0.0544
+250,0,"Backward p-value","X12",0.0563
+250,0,"Backward p-value","X13",0.0511
+250,0,"Backward p-value","X14",0.0549
+250,0,"Backward p-value","X15",0.0601
+250,0,"Backward p-value","X16",0.0606
+250,0,"Backward p-value","X17",0.0579
+250,0,"Backward p-value","X18",0.0585
+250,0,"Backward p-value","X19",0.0579
+250,0,"Backward p-value","X20",0.0563
+250,0,"Backward p-value","X6",0.061
+250,0,"Backward p-value","X7",0.0557
+250,0,"Backward p-value","X8",0.0568
+250,0,"Backward p-value","X9",0.0562
+250,0,"Elastic Net lambda.1se","X10",0.0407
+250,0,"Elastic Net lambda.1se","X11",0.0374
+250,0,"Elastic Net lambda.1se","X12",0.041
+250,0,"Elastic Net lambda.1se","X13",0.0374
+250,0,"Elastic Net lambda.1se","X14",0.0393
+250,0,"Elastic Net lambda.1se","X15",0.0429
+250,0,"Elastic Net lambda.1se","X16",0.0455
+250,0,"Elastic Net lambda.1se","X17",0.0402
+250,0,"Elastic Net lambda.1se","X18",0.0399
+250,0,"Elastic Net lambda.1se","X19",0.0404
+250,0,"Elastic Net lambda.1se","X20",0.0426
+250,0,"Elastic Net lambda.1se","X6",0.0426
+250,0,"Elastic Net lambda.1se","X7",0.0386
+250,0,"Elastic Net lambda.1se","X8",0.0382
+250,0,"Elastic Net lambda.1se","X9",0.0411
+250,0,"Elastic Net lambda.min","X10",0.0533
+250,0,"Elastic Net lambda.min","X11",0.0503
+250,0,"Elastic Net lambda.min","X12",0.0543
+250,0,"Elastic Net lambda.min","X13",0.0475
+250,0,"Elastic Net lambda.min","X14",0.0505
+250,0,"Elastic Net lambda.min","X15",0.0557
+250,0,"Elastic Net lambda.min","X16",0.0573
+250,0,"Elastic Net lambda.min","X17",0.0537
+250,0,"Elastic Net lambda.min","X18",0.0547
+250,0,"Elastic Net lambda.min","X19",0.0541
+250,0,"Elastic Net lambda.min","X20",0.0544
+250,0,"Elastic Net lambda.min","X6",0.0576
+250,0,"Elastic Net lambda.min","X7",0.0522
+250,0,"Elastic Net lambda.min","X8",0.0526
+250,0,"Elastic Net lambda.min","X9",0.0517
+250,0,"LASSO lambda.1se","X10",0.029
+250,0,"LASSO lambda.1se","X11",0.0262
+250,0,"LASSO lambda.1se","X12",0.028
+250,0,"LASSO lambda.1se","X13",0.0258
+250,0,"LASSO lambda.1se","X14",0.0278
+250,0,"LASSO lambda.1se","X15",0.0291
+250,0,"LASSO lambda.1se","X16",0.032
+250,0,"LASSO lambda.1se","X17",0.0277
+250,0,"LASSO lambda.1se","X18",0.0265
+250,0,"LASSO lambda.1se","X19",0.0282
+250,0,"LASSO lambda.1se","X20",0.0292
+250,0,"LASSO lambda.1se","X6",0.0298
+250,0,"LASSO lambda.1se","X7",0.0272
+250,0,"LASSO lambda.1se","X8",0.0275
+250,0,"LASSO lambda.1se","X9",0.0282
+250,0,"LASSO lambda.min","X10",0.0537
+250,0,"LASSO lambda.min","X11",0.0504
+250,0,"LASSO lambda.min","X12",0.0539
+250,0,"LASSO lambda.min","X13",0.0475
+250,0,"LASSO lambda.min","X14",0.0513
+250,0,"LASSO lambda.min","X15",0.0558
+250,0,"LASSO lambda.min","X16",0.0568
+250,0,"LASSO lambda.min","X17",0.0537
+250,0,"LASSO lambda.min","X18",0.0532
+250,0,"LASSO lambda.min","X19",0.0544
+250,0,"LASSO lambda.min","X20",0.0546
+250,0,"LASSO lambda.min","X6",0.0567
+250,0,"LASSO lambda.min","X7",0.0524
+250,0,"LASSO lambda.min","X8",0.0531
+250,0,"LASSO lambda.min","X9",0.053
+250,0.35,"AIC","X10",0.0613
+250,0.35,"AIC","X11",0.0604
+250,0.35,"AIC","X12",0.0632
+250,0.35,"AIC","X13",0.0601
+250,0.35,"AIC","X14",0.0626
+250,0.35,"AIC","X15",0.0642
+250,0.35,"AIC","X16",0.0672
+250,0.35,"AIC","X17",0.0623
+250,0.35,"AIC","X18",0.0623
+250,0.35,"AIC","X19",0.0619
+250,0.35,"AIC","X20",0.0629
+250,0.35,"AIC","X6",0.0646
+250,0.35,"AIC","X7",0.0627
+250,0.35,"AIC","X8",0.0631
+250,0.35,"AIC","X9",0.058
+250,0.35,"BIC","X10",0.0242
+250,0.35,"BIC","X11",0.0232
+250,0.35,"BIC","X12",0.025
+250,0.35,"BIC","X13",0.0249
+250,0.35,"BIC","X14",0.0244
+250,0.35,"BIC","X15",0.0243
+250,0.35,"BIC","X16",0.0269
+250,0.35,"BIC","X17",0.025
+250,0.35,"BIC","X18",0.0243
+250,0.35,"BIC","X19",0.0242
+250,0.35,"BIC","X20",0.0238
+250,0.35,"BIC","X6",0.0267
+250,0.35,"BIC","X7",0.0236
+250,0.35,"BIC","X8",0.0257
+250,0.35,"BIC","X9",0.0225
+250,0.35,"Backward p-value","X10",0.06
+250,0.35,"Backward p-value","X11",0.0584
+250,0.35,"Backward p-value","X12",0.0611
+250,0.35,"Backward p-value","X13",0.061
+250,0.35,"Backward p-value","X14",0.0617
+250,0.35,"Backward p-value","X15",0.0638
+250,0.35,"Backward p-value","X16",0.0656
+250,0.35,"Backward p-value","X17",0.0618
+250,0.35,"Backward p-value","X18",0.0615
+250,0.35,"Backward p-value","X19",0.0601
+250,0.35,"Backward p-value","X20",0.0624
+250,0.35,"Backward p-value","X6",0.0629
+250,0.35,"Backward p-value","X7",0.0612
+250,0.35,"Backward p-value","X8",0.0611
+250,0.35,"Backward p-value","X9",0.059
+250,0.35,"Elastic Net lambda.1se","X10",0.0097
+250,0.35,"Elastic Net lambda.1se","X11",0.0084
+250,0.35,"Elastic Net lambda.1se","X12",0.0105
+250,0.35,"Elastic Net lambda.1se","X13",0.0098
+250,0.35,"Elastic Net lambda.1se","X14",0.01
+250,0.35,"Elastic Net lambda.1se","X15",0.0104
+250,0.35,"Elastic Net lambda.1se","X16",0.0106
+250,0.35,"Elastic Net lambda.1se","X17",0.0105
+250,0.35,"Elastic Net lambda.1se","X18",0.0096
+250,0.35,"Elastic Net lambda.1se","X19",0.0089
+250,0.35,"Elastic Net lambda.1se","X20",0.0089
+250,0.35,"Elastic Net lambda.1se","X6",0.0093
+250,0.35,"Elastic Net lambda.1se","X7",0.0106
+250,0.35,"Elastic Net lambda.1se","X8",0.0111
+250,0.35,"Elastic Net lambda.1se","X9",0.0099
+250,0.35,"Elastic Net lambda.min","X10",0.0493
+250,0.35,"Elastic Net lambda.min","X11",0.0493
+250,0.35,"Elastic Net lambda.min","X12",0.0478
+250,0.35,"Elastic Net lambda.min","X13",0.0496
+250,0.35,"Elastic Net lambda.min","X14",0.0508
+250,0.35,"Elastic Net lambda.min","X15",0.0531
+250,0.35,"Elastic Net lambda.min","X16",0.0549
+250,0.35,"Elastic Net lambda.min","X17",0.0496
+250,0.35,"Elastic Net lambda.min","X18",0.0481
+250,0.35,"Elastic Net lambda.min","X19",0.0481
+250,0.35,"Elastic Net lambda.min","X20",0.0508
+250,0.35,"Elastic Net lambda.min","X6",0.052
+250,0.35,"Elastic Net lambda.min","X7",0.0498
+250,0.35,"Elastic Net lambda.min","X8",0.0494
+250,0.35,"Elastic Net lambda.min","X9",0.0477
+250,0.35,"LASSO lambda.1se","X10",0.0132
+250,0.35,"LASSO lambda.1se","X11",0.0117
+250,0.35,"LASSO lambda.1se","X12",0.0133
+250,0.35,"LASSO lambda.1se","X13",0.0132
+250,0.35,"LASSO lambda.1se","X14",0.0138
+250,0.35,"LASSO lambda.1se","X15",0.0139
+250,0.35,"LASSO lambda.1se","X16",0.0144
+250,0.35,"LASSO lambda.1se","X17",0.0136
+250,0.35,"LASSO lambda.1se","X18",0.0127
+250,0.35,"LASSO lambda.1se","X19",0.0122
+250,0.35,"LASSO lambda.1se","X20",0.0116
+250,0.35,"LASSO lambda.1se","X6",0.0122
+250,0.35,"LASSO lambda.1se","X7",0.0143
+250,0.35,"LASSO lambda.1se","X8",0.0144
+250,0.35,"LASSO lambda.1se","X9",0.0124
+250,0.35,"LASSO lambda.min","X10",0.0439
+250,0.35,"LASSO lambda.min","X11",0.0442
+250,0.35,"LASSO lambda.min","X12",0.0438
+250,0.35,"LASSO lambda.min","X13",0.0445
+250,0.35,"LASSO lambda.min","X14",0.0452
+250,0.35,"LASSO lambda.min","X15",0.0475
+250,0.35,"LASSO lambda.min","X16",0.0491
+250,0.35,"LASSO lambda.min","X17",0.0451
+250,0.35,"LASSO lambda.min","X18",0.0449
+250,0.35,"LASSO lambda.min","X19",0.0436
+250,0.35,"LASSO lambda.min","X20",0.0462
+250,0.35,"LASSO lambda.min","X6",0.0475
+250,0.35,"LASSO lambda.min","X7",0.0466
+250,0.35,"LASSO lambda.min","X8",0.0464
+250,0.35,"LASSO lambda.min","X9",0.0454
+250,0.7,"AIC","X10",0.0648
+250,0.7,"AIC","X11",0.0637
+250,0.7,"AIC","X12",0.0653
+250,0.7,"AIC","X13",0.0655
+250,0.7,"AIC","X14",0.0672
+250,0.7,"AIC","X15",0.0654
+250,0.7,"AIC","X16",0.0671
+250,0.7,"AIC","X17",0.0684
+250,0.7,"AIC","X18",0.064
+250,0.7,"AIC","X19",0.0662
+250,0.7,"AIC","X20",0.0656
+250,0.7,"AIC","X6",0.0629
+250,0.7,"AIC","X7",0.0641
+250,0.7,"AIC","X8",0.0645
+250,0.7,"AIC","X9",0.0639
+250,0.7,"BIC","X10",0.0266
+250,0.7,"BIC","X11",0.027
+250,0.7,"BIC","X12",0.0289
+250,0.7,"BIC","X13",0.0278
+250,0.7,"BIC","X14",0.0274
+250,0.7,"BIC","X15",0.0282
+250,0.7,"BIC","X16",0.0279
+250,0.7,"BIC","X17",0.0298
+250,0.7,"BIC","X18",0.0257
+250,0.7,"BIC","X19",0.0294
+250,0.7,"BIC","X20",0.0302
+250,0.7,"BIC","X6",0.0257
+250,0.7,"BIC","X7",0.0289
+250,0.7,"BIC","X8",0.0299
+250,0.7,"BIC","X9",0.0259
+250,0.7,"Backward p-value","X10",0.0625
+250,0.7,"Backward p-value","X11",0.0614
+250,0.7,"Backward p-value","X12",0.0635
+250,0.7,"Backward p-value","X13",0.0646
+250,0.7,"Backward p-value","X14",0.0654
+250,0.7,"Backward p-value","X15",0.0651
+250,0.7,"Backward p-value","X16",0.0655
+250,0.7,"Backward p-value","X17",0.0665
+250,0.7,"Backward p-value","X18",0.0614
+250,0.7,"Backward p-value","X19",0.0627
+250,0.7,"Backward p-value","X20",0.061
+250,0.7,"Backward p-value","X6",0.0605
+250,0.7,"Backward p-value","X7",0.0645
+250,0.7,"Backward p-value","X8",0.0629
+250,0.7,"Backward p-value","X9",0.0621
+250,0.7,"Elastic Net lambda.1se","X10",0.0079
+250,0.7,"Elastic Net lambda.1se","X11",0.0075
+250,0.7,"Elastic Net lambda.1se","X12",0.008
+250,0.7,"Elastic Net lambda.1se","X13",0.0074
+250,0.7,"Elastic Net lambda.1se","X14",0.007
+250,0.7,"Elastic Net lambda.1se","X15",0.0063
+250,0.7,"Elastic Net lambda.1se","X16",0.0071
+250,0.7,"Elastic Net lambda.1se","X17",0.0068
+250,0.7,"Elastic Net lambda.1se","X18",0.0068
+250,0.7,"Elastic Net lambda.1se","X19",0.0068
+250,0.7,"Elastic Net lambda.1se","X20",0.0072
+250,0.7,"Elastic Net lambda.1se","X6",0.0064
+250,0.7,"Elastic Net lambda.1se","X7",0.0061
+250,0.7,"Elastic Net lambda.1se","X8",0.0087
+250,0.7,"Elastic Net lambda.1se","X9",0.0063
+250,0.7,"Elastic Net lambda.min","X10",0.0392
+250,0.7,"Elastic Net lambda.min","X11",0.0387
+250,0.7,"Elastic Net lambda.min","X12",0.0388
+250,0.7,"Elastic Net lambda.min","X13",0.0406
+250,0.7,"Elastic Net lambda.min","X14",0.0412
+250,0.7,"Elastic Net lambda.min","X15",0.0385
+250,0.7,"Elastic Net lambda.min","X16",0.0403
+250,0.7,"Elastic Net lambda.min","X17",0.0413
+250,0.7,"Elastic Net lambda.min","X18",0.0382
+250,0.7,"Elastic Net lambda.min","X19",0.0383
+250,0.7,"Elastic Net lambda.min","X20",0.037
+250,0.7,"Elastic Net lambda.min","X6",0.0373
+250,0.7,"Elastic Net lambda.min","X7",0.0402
+250,0.7,"Elastic Net lambda.min","X8",0.0408
+250,0.7,"Elastic Net lambda.min","X9",0.0382
+250,0.7,"LASSO lambda.1se","X10",0.0093
+250,0.7,"LASSO lambda.1se","X11",0.0097
+250,0.7,"LASSO lambda.1se","X12",0.0095
+250,0.7,"LASSO lambda.1se","X13",0.0087
+250,0.7,"LASSO lambda.1se","X14",0.0084
+250,0.7,"LASSO lambda.1se","X15",0.0075
+250,0.7,"LASSO lambda.1se","X16",0.0085
+250,0.7,"LASSO lambda.1se","X17",0.0092
+250,0.7,"LASSO lambda.1se","X18",0.0083
+250,0.7,"LASSO lambda.1se","X19",0.0085
+250,0.7,"LASSO lambda.1se","X20",0.0082
+250,0.7,"LASSO lambda.1se","X6",0.0074
+250,0.7,"LASSO lambda.1se","X7",0.0083
+250,0.7,"LASSO lambda.1se","X8",0.0099
+250,0.7,"LASSO lambda.1se","X9",0.0077
+250,0.7,"LASSO lambda.min","X10",0.0365
+250,0.7,"LASSO lambda.min","X11",0.0366
+250,0.7,"LASSO lambda.min","X12",0.0351
+250,0.7,"LASSO lambda.min","X13",0.0366
+250,0.7,"LASSO lambda.min","X14",0.0365
+250,0.7,"LASSO lambda.min","X15",0.0347
+250,0.7,"LASSO lambda.min","X16",0.0371
+250,0.7,"LASSO lambda.min","X17",0.0361
+250,0.7,"LASSO lambda.min","X18",0.0353
+250,0.7,"LASSO lambda.min","X19",0.0341
+250,0.7,"LASSO lambda.min","X20",0.0346
+250,0.7,"LASSO lambda.min","X6",0.0343
+250,0.7,"LASSO lambda.min","X7",0.0364
+250,0.7,"LASSO lambda.min","X8",0.0357
+250,0.7,"LASSO lambda.min","X9",0.0324
+500,0,"AIC","X10",0.0516
+500,0,"AIC","X11",0.0567
+500,0,"AIC","X12",0.0516
+500,0,"AIC","X13",0.0515
+500,0,"AIC","X14",0.0514
+500,0,"AIC","X15",0.0533
+500,0,"AIC","X16",0.0534
+500,0,"AIC","X17",0.0487
+500,0,"AIC","X18",0.0532
+500,0,"AIC","X19",0.0531
+500,0,"AIC","X20",0.0501
+500,0,"AIC","X6",0.0534
+500,0,"AIC","X7",0.0546
+500,0,"AIC","X8",0.0497
+500,0,"AIC","X9",0.0458
+500,0,"BIC","X10",0.0133
+500,0,"BIC","X11",0.015
+500,0,"BIC","X12",0.0148
+500,0,"BIC","X13",0.0135
+500,0,"BIC","X14",0.0146
+500,0,"BIC","X15",0.014
+500,0,"BIC","X16",0.0139
+500,0,"BIC","X17",0.0122
+500,0,"BIC","X18",0.0136
+500,0,"BIC","X19",0.014
+500,0,"BIC","X20",0.0127
+500,0,"BIC","X6",0.0138
+500,0,"BIC","X7",0.014
+500,0,"BIC","X8",0.0112
+500,0,"BIC","X9",0.0122
+500,0,"Backward p-value","X10",0.0523
+500,0,"Backward p-value","X11",0.056
+500,0,"Backward p-value","X12",0.0521
+500,0,"Backward p-value","X13",0.051
+500,0,"Backward p-value","X14",0.052
+500,0,"Backward p-value","X15",0.0543
+500,0,"Backward p-value","X16",0.0549
+500,0,"Backward p-value","X17",0.0507
+500,0,"Backward p-value","X18",0.053
+500,0,"Backward p-value","X19",0.0538
+500,0,"Backward p-value","X20",0.0512
+500,0,"Backward p-value","X6",0.0533
+500,0,"Backward p-value","X7",0.054
+500,0,"Backward p-value","X8",0.0503
+500,0,"Backward p-value","X9",0.0471
+500,0,"Elastic Net lambda.1se","X10",0.0356
+500,0,"Elastic Net lambda.1se","X11",0.0382
+500,0,"Elastic Net lambda.1se","X12",0.0342
+500,0,"Elastic Net lambda.1se","X13",0.0346
+500,0,"Elastic Net lambda.1se","X14",0.0346
+500,0,"Elastic Net lambda.1se","X15",0.0348
+500,0,"Elastic Net lambda.1se","X16",0.0337
+500,0,"Elastic Net lambda.1se","X17",0.0343
+500,0,"Elastic Net lambda.1se","X18",0.0344
+500,0,"Elastic Net lambda.1se","X19",0.0335
+500,0,"Elastic Net lambda.1se","X20",0.0318
+500,0,"Elastic Net lambda.1se","X6",0.0343
+500,0,"Elastic Net lambda.1se","X7",0.0363
+500,0,"Elastic Net lambda.1se","X8",0.0335
+500,0,"Elastic Net lambda.1se","X9",0.0306
+500,0,"Elastic Net lambda.min","X10",0.0512
+500,0,"Elastic Net lambda.min","X11",0.0549
+500,0,"Elastic Net lambda.min","X12",0.0506
+500,0,"Elastic Net lambda.min","X13",0.0508
+500,0,"Elastic Net lambda.min","X14",0.0521
+500,0,"Elastic Net lambda.min","X15",0.0517
+500,0,"Elastic Net lambda.min","X16",0.0535
+500,0,"Elastic Net lambda.min","X17",0.049
+500,0,"Elastic Net lambda.min","X18",0.0519
+500,0,"Elastic Net lambda.min","X19",0.0518
+500,0,"Elastic Net lambda.min","X20",0.0487
+500,0,"Elastic Net lambda.min","X6",0.0518
+500,0,"Elastic Net lambda.min","X7",0.0522
+500,0,"Elastic Net lambda.min","X8",0.0487
+500,0,"Elastic Net lambda.min","X9",0.047
+500,0,"LASSO lambda.1se","X10",0.0174
+500,0,"LASSO lambda.1se","X11",0.02
+500,0,"LASSO lambda.1se","X12",0.0161
+500,0,"LASSO lambda.1se","X13",0.0191
+500,0,"LASSO lambda.1se","X14",0.0186
+500,0,"LASSO lambda.1se","X15",0.0179
+500,0,"LASSO lambda.1se","X16",0.0176
+500,0,"LASSO lambda.1se","X17",0.0172
+500,0,"LASSO lambda.1se","X18",0.0176
+500,0,"LASSO lambda.1se","X19",0.0168
+500,0,"LASSO lambda.1se","X20",0.0165
+500,0,"LASSO lambda.1se","X6",0.0188
+500,0,"LASSO lambda.1se","X7",0.0189
+500,0,"LASSO lambda.1se","X8",0.0163
+500,0,"LASSO lambda.1se","X9",0.0164
+500,0,"LASSO lambda.min","X10",0.0513
+500,0,"LASSO lambda.min","X11",0.0548
+500,0,"LASSO lambda.min","X12",0.051
+500,0,"LASSO lambda.min","X13",0.0501
+500,0,"LASSO lambda.min","X14",0.0519
+500,0,"LASSO lambda.min","X15",0.0524
+500,0,"LASSO lambda.min","X16",0.0536
+500,0,"LASSO lambda.min","X17",0.0485
+500,0,"LASSO lambda.min","X18",0.0514
+500,0,"LASSO lambda.min","X19",0.052
+500,0,"LASSO lambda.min","X20",0.0492
+500,0,"LASSO lambda.min","X6",0.052
+500,0,"LASSO lambda.min","X7",0.0527
+500,0,"LASSO lambda.min","X8",0.049
+500,0,"LASSO lambda.min","X9",0.046
+500,0.35,"AIC","X10",0.0582
+500,0.35,"AIC","X11",0.0575
+500,0.35,"AIC","X12",0.0579
+500,0.35,"AIC","X13",0.0589
+500,0.35,"AIC","X14",0.0562
+500,0.35,"AIC","X15",0.052
+500,0.35,"AIC","X16",0.056
+500,0.35,"AIC","X17",0.0569
+500,0.35,"AIC","X18",0.0582
+500,0.35,"AIC","X19",0.0566
+500,0.35,"AIC","X20",0.0583
+500,0.35,"AIC","X6",0.0582
+500,0.35,"AIC","X7",0.0601
+500,0.35,"AIC","X8",0.0565
+500,0.35,"AIC","X9",0.0573
+500,0.35,"BIC","X10",0.0116
+500,0.35,"BIC","X11",0.0153
+500,0.35,"BIC","X12",0.0159
+500,0.35,"BIC","X13",0.0139
+500,0.35,"BIC","X14",0.0144
+500,0.35,"BIC","X15",0.014
+500,0.35,"BIC","X16",0.0142
+500,0.35,"BIC","X17",0.0151
+500,0.35,"BIC","X18",0.0159
+500,0.35,"BIC","X19",0.0153
+500,0.35,"BIC","X20",0.015
+500,0.35,"BIC","X6",0.0157
+500,0.35,"BIC","X7",0.0148
+500,0.35,"BIC","X8",0.0135
+500,0.35,"BIC","X9",0.0165
+500,0.35,"Backward p-value","X10",0.0565
+500,0.35,"Backward p-value","X11",0.0564
+500,0.35,"Backward p-value","X12",0.0583
+500,0.35,"Backward p-value","X13",0.0592
+500,0.35,"Backward p-value","X14",0.055
+500,0.35,"Backward p-value","X15",0.0518
+500,0.35,"Backward p-value","X16",0.0553
+500,0.35,"Backward p-value","X17",0.0573
+500,0.35,"Backward p-value","X18",0.0576
+500,0.35,"Backward p-value","X19",0.0576
+500,0.35,"Backward p-value","X20",0.0573
+500,0.35,"Backward p-value","X6",0.058
+500,0.35,"Backward p-value","X7",0.0602
+500,0.35,"Backward p-value","X8",0.0561
+500,0.35,"Backward p-value","X9",0.056
+500,0.35,"Elastic Net lambda.1se","X10",0.008
+500,0.35,"Elastic Net lambda.1se","X11",0.0105
+500,0.35,"Elastic Net lambda.1se","X12",0.0085
+500,0.35,"Elastic Net lambda.1se","X13",0.0098
+500,0.35,"Elastic Net lambda.1se","X14",0.0089
+500,0.35,"Elastic Net lambda.1se","X15",0.0077
+500,0.35,"Elastic Net lambda.1se","X16",0.0085
+500,0.35,"Elastic Net lambda.1se","X17",0.0089
+500,0.35,"Elastic Net lambda.1se","X18",0.0085
+500,0.35,"Elastic Net lambda.1se","X19",0.0093
+500,0.35,"Elastic Net lambda.1se","X20",0.0097
+500,0.35,"Elastic Net lambda.1se","X6",0.0095
+500,0.35,"Elastic Net lambda.1se","X7",0.0091
+500,0.35,"Elastic Net lambda.1se","X8",0.0076
+500,0.35,"Elastic Net lambda.1se","X9",0.0099
+500,0.35,"Elastic Net lambda.min","X10",0.0476
+500,0.35,"Elastic Net lambda.min","X11",0.05
+500,0.35,"Elastic Net lambda.min","X12",0.0508
+500,0.35,"Elastic Net lambda.min","X13",0.0494
+500,0.35,"Elastic Net lambda.min","X14",0.0498
+500,0.35,"Elastic Net lambda.min","X15",0.0454
+500,0.35,"Elastic Net lambda.min","X16",0.0481
+500,0.35,"Elastic Net lambda.min","X17",0.0488
+500,0.35,"Elastic Net lambda.min","X18",0.0511
+500,0.35,"Elastic Net lambda.min","X19",0.0494
+500,0.35,"Elastic Net lambda.min","X20",0.0486
+500,0.35,"Elastic Net lambda.min","X6",0.0497
+500,0.35,"Elastic Net lambda.min","X7",0.0519
+500,0.35,"Elastic Net lambda.min","X8",0.0488
+500,0.35,"Elastic Net lambda.min","X9",0.0515
+500,0.35,"LASSO lambda.1se","X10",0.0118
+500,0.35,"LASSO lambda.1se","X11",0.0144
+500,0.35,"LASSO lambda.1se","X12",0.0123
+500,0.35,"LASSO lambda.1se","X13",0.0134
+500,0.35,"LASSO lambda.1se","X14",0.0134
+500,0.35,"LASSO lambda.1se","X15",0.0112
+500,0.35,"LASSO lambda.1se","X16",0.012
+500,0.35,"LASSO lambda.1se","X17",0.014
+500,0.35,"LASSO lambda.1se","X18",0.0117
+500,0.35,"LASSO lambda.1se","X19",0.0131
+500,0.35,"LASSO lambda.1se","X20",0.0143
+500,0.35,"LASSO lambda.1se","X6",0.0135
+500,0.35,"LASSO lambda.1se","X7",0.0143
+500,0.35,"LASSO lambda.1se","X8",0.0113
+500,0.35,"LASSO lambda.1se","X9",0.0138
+500,0.35,"LASSO lambda.min","X10",0.0427
+500,0.35,"LASSO lambda.min","X11",0.0452
+500,0.35,"LASSO lambda.min","X12",0.0472
+500,0.35,"LASSO lambda.min","X13",0.0441
+500,0.35,"LASSO lambda.min","X14",0.044
+500,0.35,"LASSO lambda.min","X15",0.041
+500,0.35,"LASSO lambda.min","X16",0.0436
+500,0.35,"LASSO lambda.min","X17",0.0435
+500,0.35,"LASSO lambda.min","X18",0.0443
+500,0.35,"LASSO lambda.min","X19",0.0452
+500,0.35,"LASSO lambda.min","X20",0.0429
+500,0.35,"LASSO lambda.min","X6",0.0435
+500,0.35,"LASSO lambda.min","X7",0.0455
+500,0.35,"LASSO lambda.min","X8",0.0438
+500,0.35,"LASSO lambda.min","X9",0.0456
+500,0.7,"AIC","X10",0.0626
+500,0.7,"AIC","X11",0.0595
+500,0.7,"AIC","X12",0.059
+500,0.7,"AIC","X13",0.0599
+500,0.7,"AIC","X14",0.0563
+500,0.7,"AIC","X15",0.0638
+500,0.7,"AIC","X16",0.0604
+500,0.7,"AIC","X17",0.0621
+500,0.7,"AIC","X18",0.0591
+500,0.7,"AIC","X19",0.0631
+500,0.7,"AIC","X20",0.0608
+500,0.7,"AIC","X6",0.061
+500,0.7,"AIC","X7",0.0607
+500,0.7,"AIC","X8",0.0609
+500,0.7,"AIC","X9",0.0634
+500,0.7,"BIC","X10",0.0175
+500,0.7,"BIC","X11",0.0176
+500,0.7,"BIC","X12",0.0174
+500,0.7,"BIC","X13",0.0185
+500,0.7,"BIC","X14",0.0175
+500,0.7,"BIC","X15",0.0194
+500,0.7,"BIC","X16",0.017
+500,0.7,"BIC","X17",0.0174
+500,0.7,"BIC","X18",0.0173
+500,0.7,"BIC","X19",0.0178
+500,0.7,"BIC","X20",0.017
+500,0.7,"BIC","X6",0.0175
+500,0.7,"BIC","X7",0.0194
+500,0.7,"BIC","X8",0.0185
+500,0.7,"BIC","X9",0.0184
+500,0.7,"Backward p-value","X10",0.0594
+500,0.7,"Backward p-value","X11",0.0594
+500,0.7,"Backward p-value","X12",0.0573
+500,0.7,"Backward p-value","X13",0.0581
+500,0.7,"Backward p-value","X14",0.0561
+500,0.7,"Backward p-value","X15",0.0627
+500,0.7,"Backward p-value","X16",0.0589
+500,0.7,"Backward p-value","X17",0.0586
+500,0.7,"Backward p-value","X18",0.0571
+500,0.7,"Backward p-value","X19",0.0608
+500,0.7,"Backward p-value","X20",0.0583
+500,0.7,"Backward p-value","X6",0.0595
+500,0.7,"Backward p-value","X7",0.0598
+500,0.7,"Backward p-value","X8",0.0581
+500,0.7,"Backward p-value","X9",0.0607
+500,0.7,"Elastic Net lambda.1se","X10",0.0069
+500,0.7,"Elastic Net lambda.1se","X11",0.0084
+500,0.7,"Elastic Net lambda.1se","X12",0.0072
+500,0.7,"Elastic Net lambda.1se","X13",0.0075
+500,0.7,"Elastic Net lambda.1se","X14",0.0074
+500,0.7,"Elastic Net lambda.1se","X15",0.0073
+500,0.7,"Elastic Net lambda.1se","X16",0.0082
+500,0.7,"Elastic Net lambda.1se","X17",0.0061
+500,0.7,"Elastic Net lambda.1se","X18",0.0075
+500,0.7,"Elastic Net lambda.1se","X19",0.0073
+500,0.7,"Elastic Net lambda.1se","X20",0.0064
+500,0.7,"Elastic Net lambda.1se","X6",0.006
+500,0.7,"Elastic Net lambda.1se","X7",0.0068
+500,0.7,"Elastic Net lambda.1se","X8",0.0063
+500,0.7,"Elastic Net lambda.1se","X9",0.0083
+500,0.7,"Elastic Net lambda.min","X10",0.0404
+500,0.7,"Elastic Net lambda.min","X11",0.0405
+500,0.7,"Elastic Net lambda.min","X12",0.0406
+500,0.7,"Elastic Net lambda.min","X13",0.0431
+500,0.7,"Elastic Net lambda.min","X14",0.0412
+500,0.7,"Elastic Net lambda.min","X15",0.0446
+500,0.7,"Elastic Net lambda.min","X16",0.0413
+500,0.7,"Elastic Net lambda.min","X17",0.0381
+500,0.7,"Elastic Net lambda.min","X18",0.0404
+500,0.7,"Elastic Net lambda.min","X19",0.0425
+500,0.7,"Elastic Net lambda.min","X20",0.0403
+500,0.7,"Elastic Net lambda.min","X6",0.0393
+500,0.7,"Elastic Net lambda.min","X7",0.042
+500,0.7,"Elastic Net lambda.min","X8",0.0392
+500,0.7,"Elastic Net lambda.min","X9",0.0409
+500,0.7,"LASSO lambda.1se","X10",0.0089
+500,0.7,"LASSO lambda.1se","X11",0.0098
+500,0.7,"LASSO lambda.1se","X12",0.0084
+500,0.7,"LASSO lambda.1se","X13",0.0091
+500,0.7,"LASSO lambda.1se","X14",0.0088
+500,0.7,"LASSO lambda.1se","X15",0.0096
+500,0.7,"LASSO lambda.1se","X16",0.0094
+500,0.7,"LASSO lambda.1se","X17",0.0086
+500,0.7,"LASSO lambda.1se","X18",0.0086
+500,0.7,"LASSO lambda.1se","X19",0.0097
+500,0.7,"LASSO lambda.1se","X20",0.0079
+500,0.7,"LASSO lambda.1se","X6",0.0075
+500,0.7,"LASSO lambda.1se","X7",0.0083
+500,0.7,"LASSO lambda.1se","X8",0.0078
+500,0.7,"LASSO lambda.1se","X9",0.01
+500,0.7,"LASSO lambda.min","X10",0.0364
+500,0.7,"LASSO lambda.min","X11",0.0355
+500,0.7,"LASSO lambda.min","X12",0.0365
+500,0.7,"LASSO lambda.min","X13",0.0384
+500,0.7,"LASSO lambda.min","X14",0.0355
+500,0.7,"LASSO lambda.min","X15",0.0414
+500,0.7,"LASSO lambda.min","X16",0.0349
+500,0.7,"LASSO lambda.min","X17",0.0361
+500,0.7,"LASSO lambda.min","X18",0.0378
+500,0.7,"LASSO lambda.min","X19",0.0363
+500,0.7,"LASSO lambda.min","X20",0.0359
+500,0.7,"LASSO lambda.min","X6",0.0362
+500,0.7,"LASSO lambda.min","X7",0.0359
+500,0.7,"LASSO lambda.min","X8",0.0366
+500,0.7,"LASSO lambda.min","X9",0.0379

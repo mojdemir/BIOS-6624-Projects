@@ -1,0 +1,467 @@
+---
+title: "Investigation of Variable Selection Algorithms"
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+# Project Goal
+
+The goal of this project is to investigate different model selection techniques in linear regression. The methods compared are:
+
+1. Backward selection based on p-values
+2. Backward selection based on AIC
+3. Backward selection based on BIC
+4. LASSO
+5. Elastic net
+
+For LASSO and elastic net, two choices of the penalty parameter are investigated:
+
+- `lambda.min`
+- `lambda.1se`
+
+The simulation settings include six scenarios defined by:
+
+- Sample size: `N = 250` or `N = 500`
+- Predictor correlation: `rho = 0`, `rho = 0.35`, or `rho = 0.70`
+
+The setting `rho = 0` represents independent predictors. The settings `rho = 0.35` and `rho = 0.70` represent moderate and strong exchangeable correlation among predictors.
+
+The true model contains five important predictors, `X1` through `X5`, with coefficients:
+
+\[
+\beta = \left(\frac{0.5}{3}, \frac{1}{3}, \frac{1.5}{3}, \frac{2}{3}, \frac{2.5}{3}\right).
+\]
+
+Predictors `X6` through `X20` have true coefficient 0.
+
+The correlated predictor settings use an exchangeable correlation structure.
+
+# Load packages
+
+```{r setup, message=FALSE, warning=FALSE}
+rm(list = ls())
+
+# Install once if needed:
+# install.packages(c("remotes", "glmnet", "dplyr", "tidyr", "future", "future.apply", "olsrr", "knitr"))
+# remotes::install_github("pbreheny/hdrm")
+
+library(hdrm)
+library(glmnet)
+library(olsrr)
+library(dplyr)
+library(tidyr)
+library(future)
+library(future.apply)
+library(knitr)
+
+# set project directory for saving output.
+proj_dir <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project4"
+
+results_tbl <- file.path(proj_dir, "Results", "Tables")
+results_fig <- file.path(proj_dir, "Results", "Figures")
+
+dir.create(results_tbl, recursive = TRUE, showWarnings = FALSE)
+dir.create(results_fig, recursive = TRUE, showWarnings = FALSE)
+```
+
+# Set up parallel computing
+
+```{r parallel-setup}
+# Set up parallel computing
+library(parallel)
+library(future)
+library(future.apply)
+
+# Use all but one CPU core
+n_workers <- max(1, parallel::detectCores() - 1)
+
+plan(multisession, workers = n_workers)
+
+n_workers
+```
+
+# Simulation settings
+
+```{r settings}
+set.seed(6624)
+
+
+nsim <- 10
+
+p <- 20
+xnames <- paste0("X", 1:p)
+
+true_beta <- c(0.5/3, 1/3, 1.5/3, 2/3, 2.5/3, rep(0, 15))
+true_vars <- paste0("X", 1:5)
+null_vars <- paste0("X", 6:20)
+
+# Six scenarios:
+# rho = 0 represents independent predictors.
+# rho = 0.35 and rho = 0.70 represent correlated predictors
+# using an exchangeable correlation structure.
+cases <- expand.grid(
+  n = c(250, 500),
+  rho = c(0, 0.35, 0.70)
+)
+
+cases
+```
+
+# Simulate one dataset
+
+Data are simulated using `hdrm::gen_data()`.
+
+```{r make-data}
+make_data <- function(n, rho, beta = true_beta) {
+  dat <- hdrm::gen_data(
+    n = n,
+    p = p,
+    p1 = length(true_vars),
+    beta = beta,
+    family = "gaussian",
+    signal = "heterogeneous",
+    corr = "exchangeable",
+    rho = rho
+  )
+
+  X <- dat$X
+  y <- dat$y
+
+  colnames(X) <- xnames
+
+  data.frame(Y = as.numeric(y), X)
+}
+```
+
+# Check one simulated dataset
+
+```{r check-data}
+checkdata <- make_data(n = 250, rho = 0.35, beta = true_beta)
+
+dim(checkdata)
+round(colMeans(checkdata[, xnames]), 3)
+round(apply(checkdata[, xnames], 2, sd), 3)
+round(cor(checkdata[, xnames]), 2)
+```
+
+# Helper functions
+
+## Extract selected variables from `glmnet`
+
+```{r helper-glmnet-vars}
+get_glmnet_vars <- function(cvfit, lambda_choice) {
+  coefs <- coef(cvfit, s = lambda_choice)
+  vars <- rownames(coefs)[as.numeric(coefs) != 0]
+  setdiff(vars, "(Intercept)")
+}
+```
+
+## Refit ordinary least squares after variable selection
+
+For all selection methods, the final selected model is refit using ordinary least squares. This follows the project prompt, but it should be interpreted carefully because this ignores the uncertainty introduced by model selection.
+
+```{r helper-refit-ols}
+refit_ols <- function(dat, vars) {
+  vars <- intersect(vars, xnames)
+  if (!length(vars)) return(NULL)
+  lm(reformulate(vars, response = "Y"), data = dat)
+}
+```
+
+## Summarize one method from one simulation
+
+```{r helper-summarize-method}
+summarize_method <- function(fit, method, n, rho, sim_id) {
+  
+  out <- data.frame(
+    n = n,
+    rho = rho,
+    sim_id = sim_id,
+    method = method,
+    variable = xnames,
+    beta_true = true_beta,
+    selected = FALSE,
+    beta_hat = NA_real_,
+    lower = NA_real_,
+    upper = NA_real_,
+    p_value = NA_real_,
+    significant = FALSE
+  )
+  
+  if (is.null(fit)) {
+    out$beta_hat_uncond <- 0
+    out$bias_uncond <- out$beta_hat_uncond - out$beta_true
+    out$covered <- FALSE
+    out$bias_selected <- NA_real_
+    return(out)
+  }
+  
+  coef_table <- summary(fit)$coefficients
+  ci_table <- suppressMessages(confint(fit))
+  
+  selected_vars <- setdiff(rownames(coef_table), "(Intercept)")
+  
+  match_rows <- match(selected_vars, out$variable)
+  
+  out$selected[match_rows] <- TRUE
+  out$beta_hat[match_rows] <- coef_table[selected_vars, "Estimate"]
+  out$p_value[match_rows] <- coef_table[selected_vars, "Pr(>|t|)"]
+  out$significant[match_rows] <- coef_table[selected_vars, "Pr(>|t|)"] < 0.05
+  out$lower[match_rows] <- ci_table[selected_vars, 1]
+  out$upper[match_rows] <- ci_table[selected_vars, 2]
+  
+  # Unconditional estimate and bias:
+  # selected variables use their OLS refit estimate;
+  # unselected variables are assigned coefficient 0.
+  out$beta_hat_uncond <- ifelse(out$selected, out$beta_hat, 0)
+  out$bias_uncond <- out$beta_hat_uncond - out$beta_true
+
+  # Unconditional coverage:
+  # selected variables are checked using their 95% CI;
+  # unselected variables are coded as not covered.
+  out$covered <- ifelse(
+    out$selected,
+    out$lower <= out$beta_true & out$upper >= out$beta_true,
+    FALSE
+  )
+
+  # Conditional bias is also saved for optional appendix use.
+  out$bias_selected <- out$beta_hat - out$beta_true
+  
+  out
+}
+```
+
+
+#helper function for one simulation
+
+```{r}
+analyze_selected_model <- function(dat, vars, method, n, rho, sim_id) {
+  fit <- refit_ols(dat, vars)
+  summarize_method(fit, method, n, rho, sim_id)
+}
+```
+
+
+
+# Run one simulation
+
+```{r one-sim-function}
+one_sim <- function(sim_id, n, rho) {
+  dat <- make_data(n = n, rho = rho, beta = true_beta)
+
+  X <- as.matrix(dat[, xnames])
+  Y <- dat$Y
+
+  full_fit <- lm(Y ~ ., data = dat)
+
+  # 1. Backward selection using p-values
+  fit_p <- ols_step_backward_p(full_fit, prem = 0.05, details = FALSE)
+  vars_p <- setdiff(names(coef(fit_p$model)), "(Intercept)")
+
+  # 2. Backward selection using AIC
+  fit_AIC <- stats::step(full_fit, direction = "backward", trace = 0)
+  vars_AIC <- names(coef(fit_AIC))[-1]
+
+  # 3. Backward selection using BIC
+  fit_BIC <- stats::step(full_fit, direction = "backward", k = log(n), trace = 0)
+  vars_BIC <- names(coef(fit_BIC))[-1]
+
+  # 4. LASSO with 10-fold cross-validation
+  cv_lasso <- cv.glmnet(X, Y, alpha = 1, nfolds = 10)
+  vars_lasso_min <- get_glmnet_vars(cv_lasso, "lambda.min")
+  vars_lasso_1se <- get_glmnet_vars(cv_lasso, "lambda.1se")
+
+  # 5. Elastic net with 10-fold cross-validation and alpha = 0.5
+  cv_enet <- cv.glmnet(X, Y, alpha = 0.5, nfolds = 10)
+  vars_enet_min <- get_glmnet_vars(cv_enet, "lambda.min")
+  vars_enet_1se <- get_glmnet_vars(cv_enet, "lambda.1se")
+  
+
+  selected_models <- list(
+  "Backward p-value" = vars_p,
+  "AIC" = vars_AIC,
+  "BIC" = vars_BIC,
+  "LASSO lambda.min" = vars_lasso_min,
+  "LASSO lambda.1se" = vars_lasso_1se,
+  "Elastic Net lambda.min" = vars_enet_min,
+  "Elastic Net lambda.1se" = vars_enet_1se
+)
+
+bind_rows(
+    lapply(names(selected_models), function(method) {
+      analyze_selected_model(
+        dat = dat,
+        vars = selected_models[[method]],
+        method = method,
+        n = n,
+        rho = rho,
+        sim_id = sim_id
+      )
+    })
+  )
+}
+```
+
+
+
+# Test one simulation
+
+```{r test-one-sim}
+test_results <- one_sim(sim_id = 1, n = 250, rho = 0)
+head(test_results)
+dim(test_results)
+nrow(test_results)
+```
+   # Run all simulations
+
+```{r run-all-sims}
+# Run all simulations faster by parallelizing over every simulation,
+# not just over the 6 scenarios.
+
+sim_grid <- tidyr::expand_grid(
+  case_id = 1:nrow(cases),
+  sim_id = 1:nsim
+) %>%
+  mutate(
+    n = cases$n[case_id],
+    rho = cases$rho[case_id]
+  )
+
+all_results_list <- future_lapply(
+  seq_len(nrow(sim_grid)),
+  function(k) {
+
+    if (k %% 100 == 0) {
+      cat("Finished", k, "of", nrow(sim_grid), "\n")
+    }
+
+    one_sim(
+      sim_id = sim_grid$sim_id[k],
+      n = sim_grid$n[k],
+      rho = sim_grid$rho[k]
+    )
+  },
+  future.seed = TRUE
+)
+
+all_results <- dplyr::bind_rows(all_results_list)
+
+head(all_results)
+```
+
+# Required summary tables
+
+## Table 1: True positives and Type II error for X1-X5
+
+```{r table-power}
+power_table <- all_results %>%
+  filter(variable %in% true_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    true_positive_rate = mean(selected),
+    type_II_error = 1 - true_positive_rate,
+    .groups = "drop"
+  )
+
+kable(power_table, digits = 3)
+```
+
+## Table 2: False positive rate for X6-X20
+
+```{r table-false-positive}
+false_positive_table <- all_results %>%
+  filter(variable %in% null_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    false_positive_rate = mean(selected),
+    .groups = "drop"
+  )
+
+kable(false_positive_table, digits = 3)
+```
+
+## Table 3: Unconditional bias and 95% CI coverage for X1-X5
+
+Unconditional bias assigns unselected variables an estimate of 0. Unconditional coverage records unselected variables as not covered.
+
+```{r table-bias-coverage}
+bias_coverage_table <- all_results %>%
+  filter(variable %in% true_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    mean_beta_hat_uncond = mean(beta_hat_uncond, na.rm = TRUE),
+    true_beta = unique(beta_true),
+    bias_uncond = mean(bias_uncond, na.rm = TRUE),
+    coverage_95CI = mean(covered, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(bias_coverage_table, digits = 3)
+```
+
+## Table 4: Type I error for X6-X20
+
+```{r table-type-one}
+type1_table <- all_results %>%
+  filter(variable %in% null_vars) %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    type_I_error = mean(significant, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(type1_table, digits = 3)
+```
+
+# Appendix: One combined variable-level table
+
+```{r variable-summary}
+variable_summary <- all_results %>%
+  group_by(n, rho, method, variable) %>%
+  summarize(
+    selection_rate = mean(selected),
+    true_positive_rate = ifelse(first(variable) %in% true_vars, mean(selected), NA_real_),
+    type_II_error = ifelse(first(variable) %in% true_vars, 1 - mean(selected), NA_real_),
+    false_positive_rate = ifelse(first(variable) %in% null_vars, mean(selected), NA_real_),
+    type_I_error = ifelse(first(variable) %in% null_vars, mean(significant, na.rm = TRUE), NA_real_),
+    mean_beta_hat_uncond = mean(beta_hat_uncond, na.rm = TRUE),
+    bias_uncond = mean(bias_uncond, na.rm = TRUE),
+    mean_beta_hat_selected = mean(beta_hat[selected], na.rm = TRUE),
+    bias_selected = mean(bias_selected[selected], na.rm = TRUE),
+    coverage_selected = mean((lower <= beta_true & upper >= beta_true)[selected], na.rm = TRUE),
+    coverage_uncond = mean(covered, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(variable_summary, digits = 3)
+```
+
+# Save results
+
+```{r save-results}
+write.csv(power_table, file.path(results_tbl, "Table1_True_Positive_TypeII_1.csv"), row.names = FALSE)
+
+write.csv(false_positive_table, file.path(results_tbl, "Table2_False_Positive_2.csv"), row.names = FALSE)
+
+write.csv(bias_coverage_table, file.path(results_tbl, "Table3_Bias_Coverage_3.csv"), row.names = FALSE)
+
+write.csv(type1_table, file.path(results_tbl, "Table4_TypeI_Error_4.csv"), row.names = FALSE)
+
+write.csv(variable_summary, file.path(results_tbl, "Appendix_Variable_Level_Summary_5.csv"), row.names = FALSE)
+
+write.csv(all_results, file.path(results_tbl, "All_Simulation_Results_6.csv"), row.names = FALSE)
+
+plan(sequential)
+```
+
+# Notes on inference after selection
+
+After variable selection, the final selected model is refit using ordinary least squares. The p-values, confidence intervals, Type I error, and coverage results are based on this refitted model as if no variable selection had occurred. This approach follows the project prompt, but these inferential results should be interpreted cautiously because post-selection inference can be biased.
+
+Unconditional bias is calculated by assigning an estimated coefficient of 0 to variables that were not selected. Unconditional coverage is calculated by coding unselected variables as not covered.
