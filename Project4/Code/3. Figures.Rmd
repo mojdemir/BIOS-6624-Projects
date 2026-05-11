@@ -1,14 +1,6 @@
-# Final Figure Organization for Project 4
+# Figures
 
-This section organizes the figures into:
-
-- Main Results Figures
-- Appendix Figures
-
-The goal is to keep the main paper concise while placing supporting inferential details in the appendix.
-
----
-```{r}
+```{r figure-setup, eval=FALSE}
 method_order <- c(
   "Backward p-value",
   "AIC",
@@ -39,7 +31,6 @@ method_colors <- c(
   "EN 1se" = "#999999"
 )
 
-
 plot_theme <- theme_minimal(base_size = 11) +
   theme(
     strip.text = element_text(face = "bold"),
@@ -51,14 +42,7 @@ plot_theme <- theme_minimal(base_size = 11) +
   )
 ```
 
-# Main Results Figures
-
-The main paper should contain the two figures that best summarize overall variable-selection performance.
-
-## Main Figure 1
-### Trade-off Between True Positive Rate and False Positive Rate
-
-This figure summarizes the overall trade-off between correctly selecting true predictors and incorrectly selecting null predictors.
+## Figure 1: TPR/FPR tradeoff
 
 ```{r figure1-tradeoff, eval=FALSE}
 fig1_data <- method_summary %>%
@@ -103,21 +87,11 @@ fig1 <- ggplot(
 
 fig1
 
-ggsave(
-  file.path(results_fig, "Figure1_TPR_FPR_Tradeoff.png"),
-  fig1,
-  width = 9,
-  height = 5.5,
-  dpi = 300
-)
+ggsave(file.path(results_fig, "Figure1_TPR_FPR_Tradeoff.png"), fig1,
+       width = 9, height = 5.5, dpi = 300)
 ```
 
----
-
-## Main Figure 2
-### Variable-Level Power for Truly Associated Predictors
-
-This figure shows how often each true predictor \(X_1\)–\(X_5\) was selected across simulation settings.
+## Figure 2: Variable-level power
 
 ```{r figure2-variable-power, eval=FALSE}
 fig2_data <- variable_summary %>%
@@ -127,20 +101,12 @@ fig2_data <- variable_summary %>%
     n = factor(n),
     rho = factor(rho),
     variable_label = paste0(variable, "\nβ=", round(beta_true, 3)),
-    variable_label = factor(
-      variable_label,
-      levels = unique(variable_label[order(beta_true)])
-    )
+    variable_label = factor(variable_label, levels = unique(variable_label[order(beta_true)]))
   )
 
 fig2 <- ggplot(
   fig2_data,
-  aes(
-    x = variable_label,
-    y = selection_probability,
-    color = Method,
-    group = Method
-  )
+  aes(x = variable_label, y = selection_probability, color = Method, group = Method)
 ) +
   geom_line(linewidth = 0.9) +
   geom_point(size = 2.2) +
@@ -157,37 +123,16 @@ fig2 <- ggplot(
 
 fig2
 
-ggsave(
-  file.path(results_fig, "Figure2_Variable_Level_Power.png"),
-  fig2,
-  width = 10,
-  height = 7,
-  dpi = 300
-)
+ggsave(file.path(results_fig, "Figure2_Variable_Level_Power.png"), fig2,
+       width = 10, height = 7, dpi = 300)
 ```
 
----
+## Figure 3: Variable-level bias
 
-# Appendix Figures
-
-The appendix contains figures related to estimation and post-selection inference.
-
----
-
-## Appendix Figure A1
-### Variable-Level Unconditional Bias
-
-This figure shows unconditional bias for the true predictors after variable selection and post-selection OLS refitting.
-
-```{r appendix-figure-a1-bias, eval=FALSE}
+```{r figure3-variable-bias, eval=FALSE}
 fig3 <- ggplot(
   fig2_data,
-  aes(
-    x = variable_label,
-    y = mean_bias_uncond,
-    color = Method,
-    group = Method
-  )
+  aes(x = variable_label, y = mean_bias_uncond, color = Method, group = Method)
 ) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
   geom_line(linewidth = 0.9) +
@@ -195,7 +140,7 @@ fig3 <- ggplot(
   facet_grid(rho ~ n, labeller = label_both) +
   scale_color_manual(values = method_colors) +
   labs(
-    title = "Appendix Figure A1. Variable-Level Unconditional Bias",
+    title = "Figure 3. Variable-Level Unconditional Bias for Truly Associated Predictors",
     subtitle = "Negative values indicate downward bias from non-selection or shrinkage",
     x = "True Predictor",
     y = "Mean Unconditional Bias"
@@ -204,23 +149,13 @@ fig3 <- ggplot(
 
 fig3
 
-ggsave(
-  file.path(results_fig, "Appendix_Figure_A1_Bias.png"),
-  fig3,
-  width = 10,
-  height = 7,
-  dpi = 300
-)
+ggsave(file.path(results_fig, "Figure3_Variable_Level_Bias.png"), fig3,
+       width = 10, height = 7, dpi = 300)
 ```
 
----
+## Figure 4: Coverage heatmap
 
-## Appendix Figure A2
-### Empirical 95% Confidence Interval Coverage
-
-This figure summarizes empirical coverage probabilities for the truly associated predictors.
-
-```{r appendix-figure-a2-coverage, eval=FALSE}
+```{r figure4-coverage, eval=FALSE}
 fig4_data <- inference_summary %>%
   mutate(
     Method = factor(method, levels = method_order, labels = method_short),
@@ -233,10 +168,7 @@ fig4 <- ggplot(
   aes(x = Method, y = rho, fill = mean_coverage_true_vars)
 ) +
   geom_tile(color = "white", linewidth = 0.7) +
-  geom_text(
-    aes(label = sprintf("%.3f", mean_coverage_true_vars)),
-    size = 3
-  ) +
+  geom_text(aes(label = sprintf("%.3f", mean_coverage_true_vars)), size = 3) +
   facet_wrap(~ n, labeller = label_both) +
   scale_fill_gradient2(
     low = "#D55E00",
@@ -247,7 +179,7 @@ fig4 <- ggplot(
     name = "Coverage"
   ) +
   labs(
-    title = "Appendix Figure A2. Empirical 95% CI Coverage",
+    title = "Figure 4. Empirical 95% CI Coverage for Truly Associated Predictors",
     subtitle = "Values closer to 0.95 indicate better nominal coverage",
     x = "Method",
     y = expression(rho)
@@ -256,11 +188,6 @@ fig4 <- ggplot(
 
 fig4
 
-ggsave(
-  file.path(results_fig, "Appendix_Figure_A2_Coverage.png"),
-  fig4,
-  width = 9,
-  height = 5.5,
-  dpi = 300
-)
+ggsave(file.path(results_fig, "Figure4_Coverage_Heatmap.png"), fig4,
+       width = 9, height = 5.5, dpi = 300)
 ```

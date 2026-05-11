@@ -1,0 +1,505 @@
+---
+title: "Simulation Study of Regression Variable Selection"
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+# Overview
+
+The purpose of this simulation is to compare several approaches for selecting predictors in a linear regression model. The focus is on three questions:
+
+1. How often does each method keep the truly important predictors?
+2. How often does each method include noise predictors?
+3. After selection, how do the OLS estimates, confidence intervals, Type I error, and Type II error behave?
+
+The five variable-selection approaches are backward selection by p-value, backward selection by AIC, backward selection by BIC, LASSO, and elastic net. For LASSO and elastic net, both `lambda.min` and `lambda.1se` are used, giving seven total methods.
+
+The true regression model has 20 possible predictors. Only `X1` through `X5` have nonzero coefficients. The remaining predictors, `X6` through `X20`, are noise variables. The nonzero coefficients are
+
+\[
+\left(\frac{0.5}{3}, \frac{1}{3}, \frac{1.5}{3}, \frac{2}{3}, \frac{2.5}{3}\right).
+\]
+
+The simulation considers two sample sizes, `n = 250` and `n = 500`, and three exchangeable predictor correlations, `rho = 0`, `rho = 0.35`, and `rho = 0.70`.
+
+**Important note.** All selected models are refit using ordinary least squares. Therefore, the reported confidence intervals and p-values are post-selection OLS summaries. These summaries are useful for comparison, but they do not adjust for the fact that the model was chosen using the same data.
+
+# Packages and folders
+
+```{r packages-folders}
+rm(list = ls())
+
+# Install once if needed:
+# install.packages(c("remotes", "glmnet", "dplyr", "tidyr", "future",
+#                    "future.apply", "progressr", "olsrr", "knitr",
+#                    "kableExtra", "ggplot2"))
+# remotes::install_github("pbreheny/hdrm")
+
+library(hdrm)
+library(glmnet)
+library(olsrr)
+library(dplyr)
+library(tidyr)
+library(future)
+library(future.apply)
+library(progressr)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(parallel)
+
+project_folder <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project4"
+
+table_folder <- file.path(project_folder, "Results", "Tables")
+figure_folder <- file.path(project_folder, "Results", "Figures")
+
+dir.create(table_folder, recursive = TRUE, showWarnings = FALSE)
+dir.create(figure_folder, recursive = TRUE, showWarnings = FALSE)
+```
+
+# Design choices
+
+```{r design-settings}
+set.seed(6624)
+
+# Start with 10 or 50 while checking the code.
+# For final results, use a larger value such as 1000, 5000, or 10000.
+B <- 10000
+
+num_predictors <- 20
+num_signal <- 5
+predictor_names <- paste0("X", seq_len(num_predictors))
+
+beta_values <- c(0.5/3, 1/3, 1.5/3, 2/3, 2.5/3, rep(0, 15))
+names(beta_values) <- predictor_names
+
+signal_variables <- predictor_names[1:num_signal]
+noise_variables <- predictor_names[(num_signal + 1):num_predictors]
+
+sig_level <- 0.05
+enet_mixing <- 0.5
+folds_for_cv <- 10
+
+design_grid <- expand.grid(
+  sample_size = c(250, 500),
+  rho = c(0, 0.35, 0.70)
+)
+
+design_grid
+```
+
+# Helper functions
+
+## Monte Carlo SEs
+
+The Monte Carlo standard error is reported for simulation-based averages and proportions. This is helpful because small differences between methods may be due to simulation noise.
+
+```{r simulation-error-functions}
+se_for_average <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) < 2) return(NA_real_)
+  sd(x) / sqrt(length(x))
+}
+
+se_for_proportion <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0) return(NA_real_)
+  pbar <- mean(x)
+  sqrt(pbar * (1 - pbar) / length(x))
+}
+```
+
+## Generate data
+
+```{r data-generator}
+make_regression_sample <- function(sample_size, rho_value, beta = beta_values) {
+
+  generated <- hdrm::gen_data(
+    n = sample_size,
+    p = num_predictors,
+    p1 = num_signal,
+    beta = beta,
+    family = "gaussian",
+    signal = "heterogeneous",
+    corr = "exchangeable",
+    rho = rho_value
+  )
+
+  predictors <- as.data.frame(generated$X)
+  colnames(predictors) <- predictor_names
+
+  list(
+    response = as.numeric(generated$y),
+    predictors = predictors
+  )
+}
+```
+
+## Quick data check
+
+```{r data-check}
+example_data <- make_regression_sample(sample_size = 250, rho_value = 0.35)
+
+length(example_data$response)
+dim(example_data$predictors)
+round(colMeans(example_data$predictors), 3)
+round(apply(example_data$predictors, 2, sd), 3)
+round(cor(example_data$predictors), 2)
+```
+
+## Pull variable names from fitted models
+
+```{r selected-variable-extraction}
+terms_from_lm <- function(model_object) {
+  setdiff(names(coef(model_object)), "(Intercept)")
+}
+
+terms_from_cv_glmnet <- function(cv_object, lambda_label) {
+  coefficient_vector <- coef(cv_object, s = lambda_label)
+  kept_terms <- rownames(coefficient_vector)[as.numeric(coefficient_vector) != 0]
+  setdiff(kept_terms, "(Intercept)")
+}
+```
+
+# Variable-selection procedures
+
+This function applies each selection rule to one simulated data set. It only returns the selected variable names; estimation and inference are handled afterward in a separate step.
+
+```{r run-selection-methods}
+apply_selection_rules <- function(response, predictors, sample_size) {
+
+  modeling_data <- data.frame(Y = response, predictors)
+  starting_model <- lm(Y ~ ., data = modeling_data)
+
+  # Backward removal by p-value.
+  pvalue_step <- ols_step_backward_p(
+    starting_model,
+    prem = sig_level,
+    details = FALSE
+  )
+
+  pvalue_vars <- terms_from_lm(pvalue_step$model)
+
+  # Backward AIC. In step(), the default k = 2 gives AIC.
+  aic_model <- stats::step(
+    starting_model,
+    direction = "backward",
+    trace = 0
+  )
+
+  aic_vars <- terms_from_lm(aic_model)
+
+  # Backward BIC. Setting k = log(n) changes the penalty from AIC to BIC.
+  bic_model <- stats::step(
+    starting_model,
+    direction = "backward",
+    k = log(sample_size),
+    trace = 0
+  )
+
+  bic_vars <- terms_from_lm(bic_model)
+
+  x_matrix <- as.matrix(predictors)
+
+  lasso_fit <- cv.glmnet(
+    x = x_matrix,
+    y = response,
+    alpha = 1,
+    nfolds = folds_for_cv,
+    standardize = TRUE
+  )
+
+  elastic_fit <- cv.glmnet(
+    x = x_matrix,
+    y = response,
+    alpha = enet_mixing,
+    nfolds = folds_for_cv,
+    standardize = TRUE
+  )
+
+  list(
+    "Backward p-value" = pvalue_vars,
+    "Backward AIC" = aic_vars,
+    "Backward BIC" = bic_vars,
+    "LASSO: lambda.min" = terms_from_cv_glmnet(lasso_fit, "lambda.min"),
+    "LASSO: lambda.1se" = terms_from_cv_glmnet(lasso_fit, "lambda.1se"),
+    "Elastic net: lambda.min" = terms_from_cv_glmnet(elastic_fit, "lambda.min"),
+    "Elastic net: lambda.1se" = terms_from_cv_glmnet(elastic_fit, "lambda.1se")
+  )
+}
+```
+
+# Post-selection OLS step
+
+For each selected model, OLS is refit using only the selected predictors. If no predictors are selected, the function returns an empty data frame and the later evaluation step treats all variables as unselected.
+
+```{r selected-model-refit}
+fit_ols_after_selection <- function(response, predictors, kept_variables) {
+
+  kept_variables <- intersect(kept_variables, colnames(predictors))
+
+  if (length(kept_variables) == 0) {
+    return(data.frame(
+      variable = character(),
+      beta_hat = numeric(),
+      p_value = numeric(),
+      lower_ci = numeric(),
+      upper_ci = numeric()
+    ))
+  }
+
+  modeling_data <- data.frame(Y = response, predictors)
+
+  final_model <- lm(
+    reformulate(kept_variables, response = "Y"),
+    data = modeling_data
+  )
+
+  coefficient_table <- summary(final_model)$coefficients
+  confidence_table <- suppressMessages(confint(final_model))
+
+  data.frame(
+    variable = rownames(coefficient_table)[-1],
+    beta_hat = coefficient_table[-1, "Estimate"],
+    p_value = coefficient_table[-1, "Pr(>|t|)"],
+    lower_ci = confidence_table[-1, 1],
+    upper_ci = confidence_table[-1, 2],
+    row.names = NULL
+  )
+}
+```
+
+# Evaluate one selected model
+
+The evaluation table keeps one row for each possible predictor. This makes it easier to compute true positive rates, false positive rates, bias, and coverage across repetitions.
+
+```{r evaluate-one-method}
+score_selected_model <- function(method_name, kept_variables, response, predictors,
+                                 sample_size, rho_value, replicate_id) {
+
+  ols_table <- fit_ols_after_selection(
+    response = response,
+    predictors = predictors,
+    kept_variables = kept_variables
+  )
+
+  variable_level <- data.frame(
+    sample_size = sample_size,
+    rho = rho_value,
+    replicate = replicate_id,
+    method = method_name,
+    variable = names(beta_values),
+    beta_true = as.numeric(beta_values),
+    stringsAsFactors = FALSE
+  ) %>%
+    mutate(
+      chosen = variable %in% kept_variables,
+      is_signal = beta_true != 0,
+      is_noise = beta_true == 0
+    ) %>%
+    left_join(ols_table, by = "variable") %>%
+    mutate(
+      beta_unconditional = ifelse(chosen, beta_hat, 0),
+      unconditional_bias = beta_unconditional - beta_true,
+
+      significant_after_refit = ifelse(chosen, p_value < sig_level, FALSE),
+
+      ci_covers_truth = case_when(
+        chosen ~ lower_ci <= beta_true & beta_true <= upper_ci,
+        !chosen & is_noise ~ TRUE,
+        !chosen & is_signal ~ FALSE
+      ),
+
+      type_I_error = is_noise & chosen & significant_after_refit,
+      type_II_error = is_signal & (!chosen | !significant_after_refit)
+    )
+
+  selected_signal <- sum(variable_level$chosen & variable_level$is_signal)
+  selected_noise <- sum(variable_level$chosen & variable_level$is_noise)
+  missed_signal <- sum(!variable_level$chosen & variable_level$is_signal)
+  rejected_noise <- sum(!variable_level$chosen & variable_level$is_noise)
+
+  model_level <- data.frame(
+    sample_size = sample_size,
+    rho = rho_value,
+    replicate = replicate_id,
+    method = method_name,
+    signal_selected = selected_signal,
+    noise_selected = selected_noise,
+    signal_missed = missed_signal,
+    noise_rejected = rejected_noise,
+    selected_model_size = selected_signal + selected_noise,
+    exact_recovery = selected_signal == num_signal & selected_noise == 0,
+    sensitivity = selected_signal / num_signal,
+    noise_selection_rate = selected_noise / length(noise_variables),
+    specificity = rejected_noise / length(noise_variables),
+    missed_signal_rate = missed_signal / num_signal
+  )
+
+  list(
+    variable_level = variable_level,
+    model_level = model_level
+  )
+}
+```
+
+# Run one simulation replicate
+
+```{r one-replicate-function}
+run_one_replicate <- function(sample_size, rho_value, replicate_id) {
+
+  sim_data <- make_regression_sample(
+    sample_size = sample_size,
+    rho_value = rho_value
+  )
+
+  selected_sets <- apply_selection_rules(
+    response = sim_data$response,
+    predictors = sim_data$predictors,
+    sample_size = sample_size
+  )
+
+  replicate_results <- lapply(names(selected_sets), function(this_method) {
+    score_selected_model(
+      method_name = this_method,
+      kept_variables = selected_sets[[this_method]],
+      response = sim_data$response,
+      predictors = sim_data$predictors,
+      sample_size = sample_size,
+      rho_value = rho_value,
+      replicate_id = replicate_id
+    )
+  })
+
+  list(
+    variable_level = bind_rows(lapply(replicate_results, `[[`, "variable_level")),
+    model_level = bind_rows(lapply(replicate_results, `[[`, "model_level"))
+  )
+}
+```
+
+# Check the workflow
+
+```{r test-workflow}
+trial_run <- run_one_replicate(sample_size = 250, rho_value = 0, replicate_id = 1)
+
+head(trial_run$variable_level)
+head(trial_run$model_level)
+```
+
+# Full simulation
+
+This chunk is not evaluated automatically because the full simulation can take a long time. Change `eval=FALSE` to `eval=TRUE` when running the final version.
+
+```{r full-simulation, eval=FALSE}
+run_plan <- tidyr::expand_grid(
+  design_id = seq_len(nrow(design_grid)),
+  replicate = seq_len(B)
+) %>%
+  mutate(
+    sample_size = design_grid$sample_size[design_id],
+    rho = design_grid$rho[design_id]
+  ) %>%
+  select(sample_size, rho, replicate)
+
+nrow(run_plan)
+
+handlers("progress")
+
+workers_to_use <- min(6, max(1, parallel::detectCores() - 2))
+plan(multisession, workers = workers_to_use)
+
+clock_start <- Sys.time()
+
+with_progress({
+
+  update_progress <- progressor(along = seq_len(nrow(run_plan)))
+
+  raw_simulation_results <- future_lapply(
+    seq_len(nrow(run_plan)),
+    function(row_id) {
+
+      update_progress()
+
+      run_one_replicate(
+        sample_size = run_plan$sample_size[row_id],
+        rho_value = run_plan$rho[row_id],
+        replicate_id = run_plan$replicate[row_id]
+      )
+    },
+    future.seed = TRUE
+  )
+})
+
+plan(sequential)
+
+clock_end <- Sys.time()
+
+message(
+  "Simulation time in minutes: ",
+  round(as.numeric(difftime(clock_end, clock_start, units = "mins")), 2)
+)
+```
+
+# Save combined simulation results
+
+```{r save-combined-results, eval=FALSE}
+by_variable <- bind_rows(
+  lapply(raw_simulation_results, function(x) x$variable_level)
+)
+
+by_model <- bind_rows(
+  lapply(raw_simulation_results, function(x) x$model_level)
+)
+
+saveRDS(by_variable, file.path(table_folder, "sim_results_by_variable.rds"))
+saveRDS(by_model, file.path(table_folder, "sim_results_by_model.rds"))
+
+write.csv(by_variable, file.path(table_folder, "sim_results_by_variable.csv"), row.names = FALSE)
+write.csv(by_model, file.path(table_folder, "sim_results_by_model.csv"), row.names = FALSE)
+```
+
+# Summary tables
+
+## Method-level performance
+
+This table gives the average model-level performance for each combination of sample size, correlation, and method. I include exact model recovery as an additional metric: it is the proportion of simulations where the method selected exactly `X1` through `X5` and no noise variables.
+
+```{r method-performance-summary, eval=FALSE}
+method_performance <- by_model %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    avg_signal_selected = mean(signal_selected),
+    avg_noise_selected = mean(noise_selected),
+    avg_model_size = mean(selected_model_size),
+    mcse_model_size = se_for_average(selected_model_size),
+
+    avg_sensitivity = mean(sensitivity),
+    mcse_sensitivity = se_for_average(sensitivity),
+
+    avg_noise_selection_rate = mean(noise_selection_rate),
+    mcse_noise_selection_rate = se_for_average(noise_selection_rate),
+
+    avg_specificity = mean(specificity),
+    mcse_specificity = se_for_average(specificity),
+
+    exact_model_recovery = mean(exact_recovery),
+    mcse_exact_model_recovery = se_for_proportion(exact_recovery),
+
+    .groups = "drop"
+  )
+
+write.csv(method_performance, file.path(table_folder, "method_level_performance.csv"), row.names = FALSE)
+
+kable(method_performance, digits = 3)
+```
+

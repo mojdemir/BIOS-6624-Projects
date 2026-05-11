@@ -1,152 +1,205 @@
----
-title: "Untitled"
-author: "Moj"
-date: "2026-05-07"
-output: html_document
----
+## Table 1: Power and Type II error for the true predictors
 
-```{r setup, include=FALSE}
-#table 1
+```{r true-variable-table, eval=FALSE}
+true_variable_results <- by_variable %>%
+  filter(variable %in% signal_variables) %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    selection_rate = mean(chosen),
+    mcse_selection_rate = se_for_proportion(chosen),
+    selection_only_type_II = 1 - selection_rate,
+    post_refit_type_II = mean(type_II_error, na.rm = TRUE),
+    mcse_post_refit_type_II = se_for_proportion(type_II_error),
+    .groups = "drop"
+  )
 
-library(gt)
-library(dplyr)
-library(tidyr)
-table1_inclusion <- all_results %>%
-  mutate(
-    truth = ifelse(variable %in% true_vars, "TRUE", "FALSE")
-  ) %>%
-  group_by(method, n, rho, truth, sim_id) %>%
+write.csv(true_variable_results, file.path(table_folder, "power_and_type2_true_variables.csv"), row.names = FALSE)
+
+kable(true_variable_results, digits = 3)
+```
+
+## Table 2: Noise-variable selection
+
+```{r noise-variable-table, eval=FALSE}
+noise_variable_results <- by_variable %>%
+  filter(variable %in% noise_variables) %>%
+  group_by(sample_size, rho, method, variable) %>%
   summarize(
-    n_selected = sum(selected),
+    false_selection_rate = mean(chosen),
+    mcse_false_selection_rate = se_for_proportion(chosen),
     .groups = "drop"
-  ) %>%
-  group_by(method, n, rho, truth) %>%
+  )
+
+write.csv(noise_variable_results, file.path(table_folder, "false_selection_noise_variables.csv"), row.names = FALSE)
+
+kable(noise_variable_results, digits = 3)
+```
+
+## Table 3: Bias and confidence interval coverage for true predictors
+
+Unconditional bias uses an estimate of zero when the variable was not selected. This summarizes the full procedure: selection followed by estimation.
+
+```{r bias-coverage-table, eval=FALSE}
+bias_coverage_results <- by_variable %>%
+  filter(variable %in% signal_variables) %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
   summarize(
-    percent_selected = mean(n_selected > 0) * 100,
-    mean_selected = mean(n_selected),
+    avg_unconditional_estimate = mean(beta_unconditional, na.rm = TRUE),
+    avg_unconditional_bias = mean(unconditional_bias, na.rm = TRUE),
+    mcse_unconditional_bias = se_for_average(unconditional_bias),
+    ci_coverage = mean(ci_covers_truth, na.rm = TRUE),
+    mcse_ci_coverage = se_for_proportion(ci_covers_truth),
     .groups = "drop"
-  ) %>%
-  pivot_longer(
-    cols = c(percent_selected, mean_selected),
-    names_to = "summary",
-    values_to = "value"
-  ) %>%
-  mutate(
-    summary = recode(
-      summary,
-      percent_selected = "% > 0 selected",
-      mean_selected = "Mean # selected"
+  )
+
+write.csv(bias_coverage_results, file.path(table_folder, "bias_and_coverage_true_variables.csv"), row.names = FALSE)
+
+kable(bias_coverage_results, digits = 3)
+```
+
+## Table 4: Type I error for null predictors
+
+Here, a Type I error means the variable is truly null, was selected, and was significant in the post-selection OLS model.
+
+```{r type1-table, eval=FALSE}
+type1_results <- by_variable %>%
+  filter(variable %in% noise_variables) %>%
+  group_by(sample_size, rho, method, variable) %>%
+  summarize(
+    type_I_error_rate = mean(type_I_error, na.rm = TRUE),
+    mcse_type_I_error_rate = se_for_proportion(type_I_error),
+    .groups = "drop"
+  )
+
+write.csv(type1_results, file.path(table_folder, "type1_error_noise_variables.csv"), row.names = FALSE)
+
+kable(type1_results, digits = 3)
+```
+
+## Appendix table: all variable-level summaries
+
+```{r appendix-variable-summary, eval=FALSE}
+variable_summary_all <- by_variable %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    selection_rate = mean(chosen),
+    mcse_selection_rate = se_for_proportion(chosen),
+
+    avg_unconditional_estimate = mean(beta_unconditional, na.rm = TRUE),
+    avg_unconditional_bias = mean(unconditional_bias, na.rm = TRUE),
+    mcse_unconditional_bias = se_for_average(unconditional_bias),
+
+    ci_coverage = mean(ci_covers_truth, na.rm = TRUE),
+    mcse_ci_coverage = se_for_proportion(ci_covers_truth),
+
+    avg_estimate_among_selected = ifelse(
+      any(chosen),
+      mean(beta_hat[chosen], na.rm = TRUE),
+      NA_real_
     ),
-    setting = paste0("N=", n, ", rho=", rho, ", ", truth)
-  ) %>%
-  select(method, summary, setting, value) %>%
-  pivot_wider(
-    names_from = setting,
-    values_from = value
-  )
 
-table1_inclusion %>%
-  gt(rowname_col = "summary", groupname_col = "method") %>%
-  
-  tab_header(
-    title = md("**Table 1. Inclusion of Truly and Falsely Associated Variables**"),
-    subtitle = "Percent of simulations selecting variables and average number selected"
-  ) %>%
-  
-  fmt_number(
-    columns = where(is.numeric),
-    decimals = 1
-  ) %>%
-  
-  cols_label(
-    method = "Method"
-  ) %>%
-  
-  tab_options(
-    table.font.size = 12,
-    heading.title.font.size = 14,
-    heading.subtitle.font.size = 11,
-    data_row.padding = px(4)
-  )
-```
+    avg_bias_among_selected = ifelse(
+      any(chosen),
+      mean((beta_hat - beta_true)[chosen], na.rm = TRUE),
+      NA_real_
+    ),
 
-## R Markdown
+    selected_only_coverage = ifelse(
+      any(chosen),
+      mean((lower_ci <= beta_true & beta_true <= upper_ci)[chosen], na.rm = TRUE),
+      NA_real_
+    ),
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+    type_I_error_rate = ifelse(
+      first(beta_true) == 0,
+      mean(type_I_error, na.rm = TRUE),
+      NA_real_
+    ),
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+    type_II_error_rate = ifelse(
+      first(beta_true) != 0,
+      mean(type_II_error, na.rm = TRUE),
+      NA_real_
+    ),
 
-```{r cars}
-#table 2
-table2_true_vars <- all_results %>%
-  filter(variable %in% true_vars) %>%
-  group_by(method, n, rho, variable, beta_true) %>%
-  summarize(
-    selection_percent = mean(selected) * 100,
-    bias = mean(bias_uncond, na.rm = TRUE),
-    coverage_percent = mean(covered, na.rm = TRUE) * 100,
     .groups = "drop"
-  ) %>%
-  mutate(
-    Beta = round(beta_true, 2),
-    setting = paste0("N=", n, ", rho=", rho)
-  ) %>%
-  select(
-    method,
-    variable,
-    Beta,
-    setting,
-    selection_percent,
-    bias,
-    coverage_percent
   )
 
-table2_true_vars %>%
-  gt(groupname_col = "method") %>%
-  
-  tab_header(
-    title = md("**Table 2. Selection Frequency, Bias, and Coverage for Truly Associated Variables**"),
-    subtitle = "Results for variables X1 through X5"
-  ) %>%
-  
-  tab_spanner(
-    label = "Performance Measures",
-    columns = c(selection_percent, bias, coverage_percent)
-  ) %>%
-  
-  cols_label(
-    variable = "Variable",
-    Beta = "True Beta",
-    setting = "Simulation Setting",
-    selection_percent = "Selection %",
-    bias = "Bias",
-    coverage_percent = "Coverage %"
-  ) %>%
-  
-  fmt_number(
-    columns = c(selection_percent, coverage_percent),
-    decimals = 1
-  ) %>%
-  
-  fmt_number(
-    columns = bias,
-    decimals = 2
-  ) %>%
-  
-  tab_options(
-    table.font.size = 12,
-    heading.title.font.size = 14,
-    heading.subtitle.font.size = 11,
-    data_row.padding = px(4)
+write.csv(variable_summary_all, file.path(table_folder, "appendix_all_variable_summaries.csv"), row.names = FALSE)
+
+kable(variable_summary_all, digits = 3)
+```
+
+## Overall inference summary
+
+```{r overall-inference-summary, eval=FALSE}
+overall_inference <- variable_summary_all %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    average_type_I_error = mean(type_I_error_rate[beta_true == 0], na.rm = TRUE),
+    mcse_average_type_I_error = se_for_average(type_I_error_rate[beta_true == 0]),
+
+    average_type_II_error = mean(type_II_error_rate[beta_true != 0], na.rm = TRUE),
+    mcse_average_type_II_error = se_for_average(type_II_error_rate[beta_true != 0]),
+
+    average_bias_for_signal_variables = mean(avg_unconditional_bias[beta_true != 0], na.rm = TRUE),
+    average_coverage_for_signal_variables = mean(ci_coverage[beta_true != 0], na.rm = TRUE),
+
+    .groups = "drop"
   )
+
+write.csv(overall_inference, file.path(table_folder, "overall_post_selection_inference.csv"), row.names = FALSE)
+
+kable(overall_inference, digits = 3)
 ```
 
-## Including Plots
+# Optional visual summaries
 
-You can also embed plots, for example:
+```{r optional-plots, eval=FALSE}
+plot_model_size <- method_performance %>%
+  ggplot(aes(x = method, y = avg_model_size)) +
+  geom_col() +
+  facet_grid(sample_size ~ rho, labeller = label_both) +
+  coord_flip() +
+  labs(
+    title = "Average selected model size",
+    x = "Selection method",
+    y = "Average number of selected predictors"
+  )
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+ggsave(file.path(figure_folder, "average_model_size.png"), plot_model_size, width = 9, height = 6)
+
+plot_exact <- method_performance %>%
+  ggplot(aes(x = method, y = exact_model_recovery)) +
+  geom_col() +
+  facet_grid(sample_size ~ rho, labeller = label_both) +
+  coord_flip() +
+  labs(
+    title = "Exact model recovery rate",
+    x = "Selection method",
+    y = "Proportion of simulations"
+  )
+
+ggsave(file.path(figure_folder, "exact_model_recovery.png"), plot_exact, width = 9, height = 6)
+
+plot_noise <- method_performance %>%
+  ggplot(aes(x = method, y = avg_noise_selection_rate)) +
+  geom_col() +
+  facet_grid(sample_size ~ rho, labeller = label_both) +
+  coord_flip() +
+  labs(
+    title = "Average noise-variable selection rate",
+    x = "Selection method",
+    y = "Average rate"
+  )
+
+ggsave(file.path(figure_folder, "noise_selection_rate.png"), plot_noise, width = 9, height = 6)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Interpretation notes
+
+Several patterns are expected in this simulation. BIC and the `lambda.1se` penalized methods should usually select smaller models, which may reduce false positives but increase missed true predictors. AIC and `lambda.min` may select more variables, which can increase power but also tends to include more noise variables. Larger sample size should improve selection of the true predictors. Stronger predictor correlation can make the selection problem harder because correlated variables may compete with each other.
+
+The exact model recovery rate is included as an additional summary. This is a stricter metric than true positive rate or false positive rate because it requires selecting all five true predictors and none of the fifteen null predictors in the same replicate.
+
+Finally, the confidence interval and p-value results should be interpreted as post-selection summaries. Since the same data are used both to select and refit the model, the usual OLS inference does not fully reflect the uncertainty from the model-selection process.

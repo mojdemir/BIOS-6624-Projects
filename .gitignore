@@ -51,6 +51,7 @@ rsconnect/
 **/DataRaw
 **/DataProcessed
 **/DataPrelim
+**/Report
 .DS_Store
 .csv
 .rda
