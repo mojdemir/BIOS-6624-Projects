@@ -1,111 +1,179 @@
-# Final Figure Organization for Project 4
-
-This section organizes the figures into:
-
-- Main Results Figures
-- Appendix Figures
-
-The goal is to keep the main paper concise while placing supporting inferential details in the appendix.
 
 ---
-```{r}
-method_order <- c(
-  "Backward p-value",
-  "AIC",
-  "BIC",
-  "LASSO lambda.min",
-  "LASSO lambda.1se",
-  "Elastic Net lambda.min",
-  "Elastic Net lambda.1se"
+
+# Figure setup
+```{r figure-setup}
+method_labels <- c(
+  "Backward p-value" = "Backward",
+  "Backward AIC" = "AIC",
+  "Backward BIC" = "BIC",
+  "LASSO: lambda.min" = "LASSO min",
+  "LASSO: lambda.1se" = "LASSO 1se",
+  "Elastic net: lambda.min" = "EN min",
+  "Elastic net: lambda.1se" = "EN 1se"
 )
 
-method_short <- c(
-  "Backward",
-  "AIC",
-  "BIC",
-  "LASSO min",
-  "LASSO 1se",
-  "EN min",
-  "EN 1se"
-)
-
-method_colors <- c(
-  "Backward" = "#0072B2",
-  "AIC" = "#E69F00",
-  "BIC" = "#009E73",
-  "LASSO min" = "#D55E00",
-  "LASSO 1se" = "#56B4E9",
-  "EN min" = "#CC79A7",
-  "EN 1se" = "#999999"
-)
-
-
-plot_theme <- theme_minimal(base_size = 11) +
+plot_theme <- theme_minimal(base_size = 12) +
   theme(
     strip.text = element_text(face = "bold"),
     legend.position = "bottom",
     legend.title = element_blank(),
-    plot.title = element_text(face = "bold", size = 12),
+    plot.title = element_text(face = "bold", size = 13),
     plot.subtitle = element_text(size = 10),
     axis.text.x = element_text(angle = 35, hjust = 1)
   )
 ```
 
-# Main Results Figures
 
-The main paper should contain the two figures that best summarize overall variable-selection performance.
 
-## Main Figure 1
-### Trade-off Between True Positive Rate and False Positive Rate
 
-This figure summarizes the overall trade-off between correctly selecting true predictors and incorrectly selecting null predictors.
+```{r figure1-selection-heatmap, fig.width=12, fig.height=7.5}
+# Figure 1: Selection accuracy and false discovery heatmap
 
-```{r figure1-tradeoff, eval=FALSE}
-fig1_data <- method_summary %>%
+figure1_data <- method_performance %>%
   mutate(
-    Method = factor(method, levels = method_order, labels = method_short),
-    n = factor(n),
-    rho = factor(rho)
+    Method = recode(method, !!!method_labels),
+    Method = factor(
+      Method,
+      levels = c(
+        "Backward",
+        "AIC",
+        "BIC",
+        "LASSO 1se",
+        "LASSO min",
+        "EN 1se",
+        "EN min"
+      )
+    ),
+    Scenario = paste0("N = ", sample_size, ", ρ = ", rho),
+    Scenario = factor(
+      Scenario,
+      levels = c(
+        "N = 250, ρ = 0",
+        "N = 250, ρ = 0.35",
+        "N = 250, ρ = 0.7",
+        "N = 500, ρ = 0",
+        "N = 500, ρ = 0.35",
+        "N = 500, ρ = 0.7"
+      )
+    )
+  ) %>%
+  select(
+    Scenario,
+    Method,
+    `True Positive Rate\nhigher is better` = mean_true_positive_rate,
+    `False Positive Rate\nlower is better` = mean_false_positive_rate
+  ) %>%
+  tidyr::pivot_longer(
+    cols = c(
+      `True Positive Rate\nhigher is better`,
+      `False Positive Rate\nlower is better`
+    ),
+    names_to = "Metric",
+    values_to = "Value"
+  ) %>%
+  mutate(
+    Metric = factor(
+      Metric,
+      levels = c(
+        "True Positive Rate\nhigher is better",
+        "False Positive Rate\nlower is better"
+      )
+    )
+  )
+
+figure1 <- ggplot(
+  figure1_data,
+  aes(
+    x = Method,
+    y = Scenario,
+    fill = Value
+  )
+) +
+  geom_tile(color = "grey85", linewidth = 0.7) +
+  geom_text(
+    aes(label = sprintf("%.2f", Value)),
+    size = 3.3
+  ) +
+  facet_wrap(~ Metric, ncol = 2) +
+  scale_fill_gradient(
+    low = "white",
+    high = "#2C7FB8",
+    limits = c(0, 1),
+    name = "Rate"
+  ) +
+  labs(
+    title = "Figure 1. Selection Accuracy and False Discovery Across Methods",
+    subtitle = "Each cell shows the average rate across 10,000 simulations per scenario; higher TPR and lower FPR indicate better selection performance.",
+    x = "Selection Method",
+    y = "Simulation Scenario",
+    caption = "TPR = proportion of true predictors selected. FPR = proportion of null predictors incorrectly selected."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10),
+    plot.caption = element_text(size = 9, hjust = 0),
+    axis.text.x = element_text(angle = 35, hjust = 1),
+    axis.title.x = element_text(margin = margin(t = 8)),
+    axis.title.y = element_text(margin = margin(r = 8)),
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
+
+figure1
+
+ggsave(
+  filename = file.path(figure_folder, "Figure1_Selection_Accuracy_Heatmap.png"),
+  plot = figure1,
+  width = 12,
+  height = 7.5,
+  dpi = 300
+)
+```
+
+
+
+
+
+
+
+
+```{r figure1-tradeoff, fig.width=9, fig.height=5.5}
+fig1_data <- method_performance %>%
+  mutate(
+    Method = recode(method, !!!method_labels),
+    sample_size_label = paste0("N = ", sample_size),
+    rho_label = paste0("rho = ", rho)
   )
 
 fig1 <- ggplot(
   fig1_data,
-  aes(x = mean_FPR, y = mean_TPR, color = Method, shape = rho)
+  aes(
+    x = mean_false_positive_rate,
+    y = mean_true_positive_rate,
+    color = Method,
+    shape = rho_label
+  )
 ) +
   geom_point(size = 3) +
-  geom_errorbar(
-    aes(
-      ymin = mean_TPR - 1.96 * mcse_TPR,
-      ymax = mean_TPR + 1.96 * mcse_TPR
-    ),
-    width = 0,
-    alpha = 0.35
-  ) +
-  geom_errorbarh(
-    aes(
-      xmin = mean_FPR - 1.96 * mcse_FPR,
-      xmax = mean_FPR + 1.96 * mcse_FPR
-    ),
-    height = 0,
-    alpha = 0.35
-  ) +
-  facet_wrap(~ n, labeller = label_both) +
-  scale_color_manual(values = method_colors) +
+  facet_wrap(~ sample_size_label) +
   coord_cartesian(xlim = c(0, NA), ylim = c(0, 1)) +
   labs(
     title = "Figure 1. Trade-off Between True Positive Rate and False Positive Rate",
     subtitle = "Upper-left region indicates better selection performance",
     x = "Mean False Positive Rate",
     y = "Mean True Positive Rate",
-    shape = expression(rho)
+    shape = "Correlation"
   ) +
   plot_theme
 
 fig1
 
 ggsave(
-  file.path(results_fig, "Figure1_TPR_FPR_Tradeoff.png"),
-  fig1,
+  filename = file.path(figure_folder, "Figure1_TPR_FPR_Tradeoff.png"),
+  plot = fig1,
   width = 9,
   height = 5.5,
   dpi = 300
@@ -119,148 +187,341 @@ ggsave(
 
 This figure shows how often each true predictor \(X_1\)–\(X_5\) was selected across simulation settings.
 
-```{r figure2-variable-power, eval=FALSE}
-fig2_data <- variable_summary %>%
-  filter(beta_true != 0) %>%
+
+
+```{r figure2-weak-signal, fig.width=10, fig.height=6}
+figure2_data <- by_variable %>%
+  filter(variable == "X1") %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    selection_probability = mean(chosen),
+    .groups = "drop"
+  ) %>%
   mutate(
-    Method = factor(method, levels = method_order, labels = method_short),
-    n = factor(n),
-    rho = factor(rho),
-    variable_label = paste0(variable, "\nβ=", round(beta_true, 3)),
-    variable_label = factor(
-      variable_label,
-      levels = unique(variable_label[order(beta_true)])
-    )
+    Method = recode(method, !!!method_labels),
+    Method = factor(
+      Method,
+      levels = c(
+        "Backward",
+        "AIC",
+        "BIC",
+        "LASSO 1se",
+        "LASSO min",
+        "EN 1se",
+        "EN min"
+      )
+    ),
+    sample_size_label = paste0("N = ", sample_size)
   )
 
-fig2 <- ggplot(
-  fig2_data,
+figure2 <- ggplot(
+  figure2_data,
   aes(
-    x = variable_label,
+    x = factor(rho),
     y = selection_probability,
     color = Method,
     group = Method
   )
 ) +
-  geom_line(linewidth = 0.9) +
-  geom_point(size = 2.2) +
-  facet_grid(rho ~ n, labeller = label_both) +
-  scale_color_manual(values = method_colors) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  facet_wrap(~ sample_size_label) +
   coord_cartesian(ylim = c(0, 1)) +
   labs(
-    title = "Figure 2. Variable-Level Power for Truly Associated Predictors",
-    subtitle = "Selection probability shown separately for X1 through X5",
-    x = "True Predictor",
-    y = "Selection Probability"
+    title = "Figure 2. Selection Probability for the Weakest Signal",
+    subtitle = expression("Predictor X1 has the smallest nonzero effect (" * beta[1] == 0.1667 * "); differences among methods are most visible for weak signals."),
+    x = expression("Predictor Correlation (" * rho * ")"),
+    y = "Selection Probability",
+    caption = "Each point shows the proportion of 10,000 simulations in which X1 was selected."
   ) +
-  plot_theme
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(face = "bold", size = 11),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10),
+    plot.caption = element_text(size = 9, hjust = 0),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    panel.grid.minor = element_blank()
+  )
 
-fig2
+figure2
 
 ggsave(
-  file.path(results_fig, "Figure2_Variable_Level_Power.png"),
-  fig2,
+  filename = file.path(figure_folder, "Figure2_Weak_Signal_X1_Selection.png"),
+  plot = figure2,
   width = 10,
-  height = 7,
+  height = 6,
   dpi = 300
 )
 ```
 
----
 
-# Appendix Figures
 
-The appendix contains figures related to estimation and post-selection inference.
 
----
 
-## Appendix Figure A1
-### Variable-Level Unconditional Bias
+```{r figure3-coverage, fig.width=9, fig.height=5.5}
+overall_inference_summary <- by_variable %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    mean_type_I_error = mean(type_I_error[beta_true == 0], na.rm = TRUE),
+    mean_type_II_error = mean(type_II_error[beta_true != 0], na.rm = TRUE),
+    mean_bias_signal_variables = mean(unconditional_bias[beta_true != 0], na.rm = TRUE),
+    mean_coverage_signal_variables = mean(ci_covers_truth[beta_true != 0], na.rm = TRUE),
+    .groups = "drop"
+  )
 
-This figure shows unconditional bias for the true predictors after variable selection and post-selection OLS refitting.
+fig3_data <- overall_inference_summary %>%
+  mutate(
+    Method = recode(method, !!!method_labels),
+    sample_size_label = paste0("N = ", sample_size)
+  )
 
-```{r appendix-figure-a1-bias, eval=FALSE}
 fig3 <- ggplot(
-  fig2_data,
+  fig3_data,
   aes(
-    x = variable_label,
-    y = mean_bias_uncond,
+    x = factor(rho),
+    y = mean_coverage_signal_variables,
     color = Method,
     group = Method
   )
 ) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
-  geom_line(linewidth = 0.9) +
-  geom_point(size = 2.2) +
-  facet_grid(rho ~ n, labeller = label_both) +
-  scale_color_manual(values = method_colors) +
-  labs(
-    title = "Appendix Figure A1. Variable-Level Unconditional Bias",
-    subtitle = "Negative values indicate downward bias from non-selection or shrinkage",
-    x = "True Predictor",
-    y = "Mean Unconditional Bias"
+  geom_hline(
+    yintercept = 0.95,
+    linetype = "dashed",
+    color = "grey40"
   ) +
-  plot_theme
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  facet_wrap(~ sample_size_label) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(
+    title = "Figure 3. Empirical Coverage Probability for Truly Associated Predictors",
+    
+    subtitle =
+      "Coverage was evaluated for predictors with nonzero regression coefficients (X1–X5). The dashed line represents 
+    nominal 95% confidence interval coverage after variable selection and post-selection OLS refitting.",
+
+    x = expression("Predictor Correlation (" * rho * ")"),
+
+    y = "Mean Coverage Probability",
+
+    caption =
+      "Coverage probabilities below 0.95 indicate undercoverage and reduced inferential reliability."
+  ) +
+  plot_theme +
+  theme(
+    plot.caption = element_text(size = 9, hjust = 0),
+    panel.grid.minor = element_blank()
+  )
 
 fig3
 
 ggsave(
-  file.path(results_fig, "Appendix_Figure_A1_Bias.png"),
-  fig3,
+  filename = file.path(
+    figure_folder,
+    "Figure3_Coverage_Probability.png"
+  ),
+  plot = fig3,
+  width = 9,
+  height = 5.8,
+  dpi = 300
+)
+```
+
+
+```{r appendix-figure-a1-bias, fig.width=10, fig.height=7}
+figure4_bias_data <- by_variable %>%
+  filter(variable %in% signal_variables) %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    mean_bias = mean(unconditional_bias, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Method = recode(method, !!!method_labels),
+
+    Method = factor(
+      Method,
+      levels = c(
+        "Backward",
+        "AIC",
+        "BIC",
+        "LASSO 1se",
+        "LASSO min",
+        "EN 1se",
+        "EN min"
+      )
+    ),
+
+    sample_size_label = paste0("N = ", sample_size),
+
+    rho_label = factor(
+      paste0("ρ = ", rho),
+      levels = c(
+        "ρ = 0",
+        "ρ = 0.35",
+        "ρ = 0.7"
+      )
+    ),
+
+    variable_label = paste0(
+      variable,
+      "\nβ = ",
+      round(beta_true, 3)
+    )
+  )
+
+figure4 <- ggplot(
+  figure4_bias_data,
+  aes(
+    x = variable_label,
+    y = mean_bias,
+    color = Method,
+    group = Method
+  )
+) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "grey40"
+  ) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.4) +
+  facet_grid(
+    rho_label ~ sample_size_label
+  ) +
+  labs(
+    title =
+      "Figure 4. Variable-Level Unconditional Bias for Truly Associated Predictors",
+
+    subtitle =
+      "Bias was evaluated for predictors with nonzero regression coefficients (X1–X5). More negative values indicate downward bias caused by shrinkage 
+    or failure to select weaker signals after variable selection.",
+
+    x =
+      "True Predictor and Corresponding Regression Coefficient",
+
+    y =
+      "Mean Unconditional Bias",
+
+    caption =
+      "Bias was computed after variable selection and post-selection OLS refitting. Results are averaged over 10,000 simulation replicates for each scenario."
+  ) +
+  plot_theme +
+  theme(
+    plot.caption = element_text(
+      size = 9,
+      hjust = 0
+    ),
+    panel.grid.minor = element_blank()
+  )
+
+figure4
+
+ggsave(
+  filename = file.path(
+    figure_folder,
+    "Figure4_Variable_Level_Bias.png"
+  ),
+  plot = figure4,
   width = 10,
   height = 7,
   dpi = 300
 )
 ```
 
----
 
-## Appendix Figure A2
-### Empirical 95% Confidence Interval Coverage
+## Appendix Figure A2: Type I error heatmap
 
-This figure summarizes empirical coverage probabilities for the truly associated predictors.
-
-```{r appendix-figure-a2-coverage, eval=FALSE}
-fig4_data <- inference_summary %>%
+```{r appendix-figure-a2-typeI, fig.width=10, fig.height=6}
+appendix_typeI_data <- by_variable %>%
+  filter(variable %in% noise_variables) %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    mean_type_I_error = mean(type_I_error, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
   mutate(
-    Method = factor(method, levels = method_order, labels = method_short),
-    n = factor(n),
-    rho = factor(rho)
+    Method = recode(method, !!!method_labels),
+    sample_size_label = paste0("N = ", sample_size),
+    rho_label = paste0("rho = ", rho)
   )
 
-fig4 <- ggplot(
-  fig4_data,
-  aes(x = Method, y = rho, fill = mean_coverage_true_vars)
+appendix_fig_A2 <- ggplot(
+  appendix_typeI_data,
+  aes(
+    x = Method,
+    y = rho_label,
+    fill = mean_type_I_error
+  )
 ) +
   geom_tile(color = "white", linewidth = 0.7) +
   geom_text(
-    aes(label = sprintf("%.3f", mean_coverage_true_vars)),
+    aes(label = sprintf("%.3f", mean_type_I_error)),
     size = 3
   ) +
-  facet_wrap(~ n, labeller = label_both) +
-  scale_fill_gradient2(
-    low = "#D55E00",
-    mid = "white",
-    high = "#0072B2",
-    midpoint = 0.95,
-    limits = c(0, 1),
-    name = "Coverage"
-  ) +
+  facet_wrap(~ sample_size_label) +
   labs(
-    title = "Appendix Figure A2. Empirical 95% CI Coverage",
-    subtitle = "Values closer to 0.95 indicate better nominal coverage",
+    title = "Appendix Figure A2. Type I Error for Null Predictors",
     x = "Method",
-    y = expression(rho)
+    y = expression(rho),
+    fill = "Type I Error"
   ) +
   plot_theme
 
-fig4
+appendix_fig_A2
 
 ggsave(
-  file.path(results_fig, "Appendix_Figure_A2_Coverage.png"),
-  fig4,
+  filename = file.path(figure_folder, "Appendix_Figure_A2_TypeI_Error.png"),
+  plot = appendix_fig_A2,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+```
+
+
+
+```{r appendix-figure-a3-model-size, fig.width=9, fig.height=5.5}
+appendix_model_size_data <- by_model %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    mean_model_size = mean(model_size),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Method = recode(method, !!!method_labels),
+    sample_size_label = paste0("N = ", sample_size)
+  )
+
+appendix_fig_A3 <- ggplot(
+  appendix_model_size_data,
+  aes(
+    x = factor(rho),
+    y = mean_model_size,
+    color = Method,
+    group = Method
+  )
+) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ sample_size_label) +
+  labs(
+    title = "Appendix Figure A3. Average Model Size",
+    x = expression(rho),
+    y = "Average Number of Selected Variables"
+  ) +
+  plot_theme
+
+appendix_fig_A3
+
+ggsave(
+  filename = file.path(figure_folder, "Appendix_Figure_A3_Model_Size.png"),
+  plot = appendix_fig_A3,
   width = 9,
   height = 5.5,
   dpi = 300
 )
 ```
+

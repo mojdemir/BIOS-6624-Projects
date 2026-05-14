@@ -1,6 +1,6 @@
 ---
 title: "Simulation Study of Regression Variable Selection"
-author: ""
+author: "Mojde Mir"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -13,36 +13,13 @@ output:
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-# Overview
 
-The purpose of this simulation is to compare several approaches for selecting predictors in a linear regression model. The focus is on three questions:
 
-1. How often does each method keep the truly important predictors?
-2. How often does each method include noise predictors?
-3. After selection, how do the OLS estimates, confidence intervals, Type I error, and Type II error behave?
-
-The five variable-selection approaches are backward selection by p-value, backward selection by AIC, backward selection by BIC, LASSO, and elastic net. For LASSO and elastic net, both `lambda.min` and `lambda.1se` are used, giving seven total methods.
-
-The true regression model has 20 possible predictors. Only `X1` through `X5` have nonzero coefficients. The remaining predictors, `X6` through `X20`, are noise variables. The nonzero coefficients are
-
-\[
-\left(\frac{0.5}{3}, \frac{1}{3}, \frac{1.5}{3}, \frac{2}{3}, \frac{2.5}{3}\right).
-\]
-
-The simulation considers two sample sizes, `n = 250` and `n = 500`, and three exchangeable predictor correlations, `rho = 0`, `rho = 0.35`, and `rho = 0.70`.
-
-**Important note.** All selected models are refit using ordinary least squares. Therefore, the reported confidence intervals and p-values are post-selection OLS summaries. These summaries are useful for comparison, but they do not adjust for the fact that the model was chosen using the same data.
 
 # Packages and folders
 
 ```{r packages-folders}
 rm(list = ls())
-
-# Install once if needed:
-# install.packages(c("remotes", "glmnet", "dplyr", "tidyr", "future",
-#                    "future.apply", "progressr", "olsrr", "knitr",
-#                    "kableExtra", "ggplot2"))
-# remotes::install_github("pbreheny/hdrm")
 
 library(hdrm)
 library(glmnet)
@@ -57,13 +34,17 @@ library(kableExtra)
 library(ggplot2)
 library(parallel)
 
+
+Sys.setenv(OMP_NUM_THREADS = 1)
+Sys.setenv(MKL_NUM_THREADS = 1)
+
+# Increase allowed size of objects exported to parallel workers
+options(future.globals.maxSize = 8 * 1024^3)
+
 project_folder <- "C:/Users/mojde/Desktop/Documents/BIOS-6624-Projects/Project4"
 
 table_folder <- file.path(project_folder, "Results", "Tables")
 figure_folder <- file.path(project_folder, "Results", "Figures")
-
-dir.create(table_folder, recursive = TRUE, showWarnings = FALSE)
-dir.create(figure_folder, recursive = TRUE, showWarnings = FALSE)
 ```
 
 # Design choices
@@ -71,8 +52,6 @@ dir.create(figure_folder, recursive = TRUE, showWarnings = FALSE)
 ```{r design-settings}
 set.seed(6624)
 
-# Start with 10 or 50 while checking the code.
-# For final results, use a larger value such as 1000, 5000, or 10000.
 B <- 10000
 
 num_predictors <- 20
@@ -333,16 +312,24 @@ score_selected_model <- function(method_name, kept_variables, response, predicto
     rho = rho_value,
     replicate = replicate_id,
     method = method_name,
-    signal_selected = selected_signal,
-    noise_selected = selected_noise,
-    signal_missed = missed_signal,
-    noise_rejected = rejected_noise,
-    selected_model_size = selected_signal + selected_noise,
+
+    # Confusion-matrix counts for variable selection.
+    # TP: true signal selected
+    # FP: noise variable selected
+    # FN: true signal missed
+    # TN: noise variable correctly excluded
+    TP = selected_signal,
+    FP = selected_noise,
+    FN = missed_signal,
+    TN = rejected_noise,
+
+    model_size = selected_signal + selected_noise,
     exact_recovery = selected_signal == num_signal & selected_noise == 0,
-    sensitivity = selected_signal / num_signal,
-    noise_selection_rate = selected_noise / length(noise_variables),
-    specificity = rejected_noise / length(noise_variables),
-    missed_signal_rate = missed_signal / num_signal
+
+    true_positive_rate = selected_signal / num_signal,
+    false_positive_rate = selected_noise / length(noise_variables),
+    true_negative_rate = rejected_noise / length(noise_variables),
+    false_negative_rate = missed_signal / num_signal
   )
 
   list(
@@ -398,9 +385,14 @@ head(trial_run$model_level)
 
 # Full simulation
 
-This chunk is not evaluated automatically because the full simulation can take a long time. Change `eval=FALSE` to `eval=TRUE` when running the final version.
+The original parallel version used `future_lapply()`. On some computers, especially when `cv.glmnet()` is also doing repeated cross-validation, the parallel workers can stop before the simulation begins. This version runs the simulation in parallel chunks using `future_lapply()` and saves checkpoints after each chunk.
 
-```{r full-simulation, eval=FALSE}
+
+```{r full-simulation}
+B <- 10000
+
+num_workers <- max(1, floor(parallel::detectCores() * 0.75))
+
 run_plan <- tidyr::expand_grid(
   design_id = seq_len(nrow(design_grid)),
   replicate = seq_len(B)
@@ -413,34 +405,71 @@ run_plan <- tidyr::expand_grid(
 
 nrow(run_plan)
 
-handlers("progress")
+checkpoint_folder <- file.path(project_folder, "Results", "Checkpoints")
+dir.create(checkpoint_folder, recursive = TRUE, showWarnings = FALSE)
 
-workers_to_use <- min(6, max(1, parallel::detectCores() - 2))
-plan(multisession, workers = workers_to_use)
+chunk_size <- 500
+run_plan$chunk_id <- ceiling(seq_len(nrow(run_plan)) / chunk_size)
+
+plan(multisession, workers = num_workers)
 
 clock_start <- Sys.time()
 
-with_progress({
+for (this_chunk in sort(unique(run_plan$chunk_id))) {
 
-  update_progress <- progressor(along = seq_len(nrow(run_plan)))
+  checkpoint_file <- file.path(
+    checkpoint_folder,
+    paste0("simulation_chunk_", this_chunk, ".rds")
+  )
 
-  raw_simulation_results <- future_lapply(
-    seq_len(nrow(run_plan)),
-    function(row_id) {
+  if (file.exists(checkpoint_file)) {
+    message("Skipping completed chunk ", this_chunk)
+    next
+  }
 
-      update_progress()
+  chunk_plan <- run_plan %>%
+    filter(chunk_id == this_chunk)
+
+  message(
+    "Starting chunk ", this_chunk, " of ",
+    max(run_plan$chunk_id),
+    " with ", nrow(chunk_plan), " jobs"
+  )
+
+ chunk_results <- future.apply::future_lapply(
+  seq_len(nrow(chunk_plan)),
+  future.seed = TRUE,
+  future.packages = c(
+    "hdrm", "glmnet", "olsrr", "dplyr", "tidyr"
+  ),
+  function(row_id) {
+
+    tryCatch({
 
       run_one_replicate(
-        sample_size = run_plan$sample_size[row_id],
-        rho_value = run_plan$rho[row_id],
-        replicate_id = run_plan$replicate[row_id]
+        sample_size = chunk_plan$sample_size[row_id],
+        rho_value = chunk_plan$rho[row_id],
+        replicate_id = chunk_plan$replicate[row_id]
       )
-    },
-    future.seed = TRUE
-  )
-})
 
-plan(sequential)
+    }, error = function(e) {
+
+      message(
+        "Error in replicate ",
+        chunk_plan$replicate[row_id],
+        ": ",
+        conditionMessage(e)
+      )
+
+      NULL
+    })
+  }
+)
+  saveRDS(chunk_results, checkpoint_file)
+
+  message("Saved chunk ", this_chunk)
+  gc()
+}
 
 clock_end <- Sys.time()
 
@@ -452,7 +481,22 @@ message(
 
 # Save combined simulation results
 
-```{r save-combined-results, eval=FALSE}
+```{r save-combined-results}
+checkpoint_files <- list.files(
+  checkpoint_folder,
+  pattern = "^simulation_chunk_.*\\.rds$",
+  full.names = TRUE
+)
+
+raw_simulation_results <- unlist(
+  lapply(checkpoint_files, readRDS),
+  recursive = FALSE
+)
+
+raw_simulation_results <- raw_simulation_results[
+  !sapply(raw_simulation_results, is.null)
+]
+
 by_variable <- bind_rows(
   lapply(raw_simulation_results, function(x) x$variable_level)
 )
@@ -472,25 +516,31 @@ write.csv(by_model, file.path(table_folder, "sim_results_by_model.csv"), row.nam
 
 ## Method-level performance
 
-This table gives the average model-level performance for each combination of sample size, correlation, and method. I include exact model recovery as an additional metric: it is the proportion of simulations where the method selected exactly `X1` through `X5` and no noise variables.
+This table gives the average TP, FP, FN, and TN counts for each combination of sample size, correlation, and method. The rates are also included to make the counts easier to compare across methods.
 
-```{r method-performance-summary, eval=FALSE}
+```{r method-performance-summary}
 method_performance <- by_model %>%
   group_by(sample_size, rho, method) %>%
   summarize(
-    avg_signal_selected = mean(signal_selected),
-    avg_noise_selected = mean(noise_selected),
-    avg_model_size = mean(selected_model_size),
-    mcse_model_size = se_for_average(selected_model_size),
+    mean_TP = mean(TP),
+    mean_FP = mean(FP),
+    mean_FN = mean(FN),
+    mean_TN = mean(TN),
 
-    avg_sensitivity = mean(sensitivity),
-    mcse_sensitivity = se_for_average(sensitivity),
+    mean_model_size = mean(model_size),
+    mcse_model_size = se_for_average(model_size),
 
-    avg_noise_selection_rate = mean(noise_selection_rate),
-    mcse_noise_selection_rate = se_for_average(noise_selection_rate),
+    mean_true_positive_rate = mean(true_positive_rate),
+    mcse_true_positive_rate = se_for_average(true_positive_rate),
 
-    avg_specificity = mean(specificity),
-    mcse_specificity = se_for_average(specificity),
+    mean_false_positive_rate = mean(false_positive_rate),
+    mcse_false_positive_rate = se_for_average(false_positive_rate),
+
+    mean_true_negative_rate = mean(true_negative_rate),
+    mcse_true_negative_rate = se_for_average(true_negative_rate),
+
+    mean_false_negative_rate = mean(false_negative_rate),
+    mcse_false_negative_rate = se_for_average(false_negative_rate),
 
     exact_model_recovery = mean(exact_recovery),
     mcse_exact_model_recovery = se_for_proportion(exact_recovery),
@@ -498,8 +548,138 @@ method_performance <- by_model %>%
     .groups = "drop"
   )
 
-write.csv(method_performance, file.path(table_folder, "method_level_performance.csv"), row.names = FALSE)
+write.csv(method_performance, file.path(table_folder, "method_level_TP_FP_FN_TN.csv"), row.names = FALSE)
 
 kable(method_performance, digits = 3)
 ```
 
+
+
+## True positive and Type II error summary for signal variables
+
+
+```{r appendix-table-A1}
+appendix_A1 <- by_variable %>%
+  filter(variable %in% signal_variables) %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    selection_probability = mean(chosen),
+    mean_bias = mean(unconditional_bias, na.rm = TRUE),
+    coverage = mean(ci_covers_truth, na.rm = TRUE),
+    type_II_error = mean(type_II_error, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(sample_size, rho, method, variable)
+
+write.csv(
+  appendix_A1,
+  file.path(table_folder, "Appendix_Table_A1.csv"),
+  row.names = FALSE
+)
+
+appendix_A1 %>%
+  rename(
+    N = sample_size,
+    rho = rho,
+    Method = method,
+    Variable = variable,
+    `True Beta` = beta_true,
+    `Selection Probability` = selection_probability,
+    `Mean Bias` = mean_bias,
+    Coverage = coverage,
+    `Type II Error` = type_II_error
+  ) %>%
+  kable(
+    digits = 4,
+    caption = "Appendix Table A1. Variable-Level Performance for Truly Associated Predictors",
+    longtable = TRUE,
+    booktabs = TRUE
+  ) %>%
+  kable_styling(
+    latex_options = c("repeat_header"),
+    font_size = 9
+  )
+```
+
+## False positive and Type I error summary for noise variables
+
+
+```{r appendix-table-A2}
+appendix_A2 <- by_variable %>%
+  filter(variable %in% noise_variables) %>%
+  group_by(sample_size, rho, method, variable) %>%
+  summarize(
+    false_positive_rate = mean(chosen),
+    type_I_error = mean(type_I_error, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(sample_size, rho, method, variable)
+
+write.csv(
+  appendix_A2,
+  file.path(table_folder, "Appendix_Table_A2.csv"),
+  row.names = FALSE
+)
+
+appendix_A2 %>%
+  rename(
+    N = sample_size,
+    rho = rho,
+    Method = method,
+    Variable = variable,
+    `False Positive Rate` = false_positive_rate,
+    `Type I Error` = type_I_error
+  ) %>%
+  kable(
+    digits = 4,
+    caption = "Appendix Table A2. Variable-Level False Positive Rates and Type I Error for Null Predictors",
+    longtable = TRUE,
+    booktabs = TRUE
+  ) %>%
+  kable_styling(
+    latex_options = c("repeat_header"),
+    font_size = 9
+  )
+```
+
+## Bias and coverage summary for signal variables
+
+```{r bias-coverage-summary}
+bias_coverage_summary <- by_variable %>%
+  filter(variable %in% signal_variables) %>%
+  group_by(sample_size, rho, method, variable, beta_true) %>%
+  summarize(
+    mean_beta_unconditional = mean(beta_unconditional, na.rm = TRUE),
+    mean_unconditional_bias = mean(unconditional_bias, na.rm = TRUE),
+    mcse_unconditional_bias = se_for_average(unconditional_bias),
+    coverage_probability = mean(ci_covers_truth, na.rm = TRUE),
+    mcse_coverage_probability = se_for_proportion(ci_covers_truth),
+    .groups = "drop"
+  )
+
+write.csv(bias_coverage_summary, file.path(table_folder, "bias_coverage_signal_variables.csv"), row.names = FALSE)
+
+kable(bias_coverage_summary, digits = 3)
+```
+
+## Overall inference summary
+
+```{r overall-inference-summary}
+overall_inference_summary <- by_variable %>%
+  group_by(sample_size, rho, method) %>%
+  summarize(
+    mean_type_I_error = mean(type_I_error[beta_true == 0], na.rm = TRUE),
+    mcse_type_I_error = se_for_proportion(type_I_error[beta_true == 0]),
+
+    mean_type_II_error = mean(type_II_error[beta_true != 0], na.rm = TRUE),
+    mcse_type_II_error = se_for_proportion(type_II_error[beta_true != 0]),
+
+    mean_bias_signal_variables = mean(unconditional_bias[beta_true != 0], na.rm = TRUE),
+    mean_coverage_signal_variables = mean(ci_covers_truth[beta_true != 0], na.rm = TRUE),
+    .groups = "drop"
+  )
+
+write.csv(overall_inference_summary, file.path(table_folder, "overall_inference_summary.csv"), row.names = FALSE)
+
+kable(overall_inference_summary, digits = 3)
+```
