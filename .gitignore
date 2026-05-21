@@ -47,9 +47,8 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
-Project4/Results/Tables/sim_results_by_variable.csv
-Project4/Results/Tables/sim_results_by_variable.rds
-Project4/Results/Checkpoints/
+**/Report
+**/Codes
 *.RData
 **/DataRaw
 **/DataProcessed
