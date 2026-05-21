@@ -47,12 +47,13 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
-**/Report
-**/Codes
+
 *.RData
 **/DataRaw
 **/DataProcessed
 **/DataPrelim
+**/Report
+**/Code
 .DS_Store
 .csv
 .rda
