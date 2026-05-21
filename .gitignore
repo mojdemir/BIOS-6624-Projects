@@ -49,11 +49,11 @@ po/*~
 rsconnect/
 
 *.RData
+**/Report
+**/Code
 **/DataRaw
 **/DataProcessed
 **/DataPrelim
-**/Report
-**/Code
 .DS_Store
 .csv
 .rda
