@@ -1,0 +1,39 @@
+                           Kaplan-Meier Survival Curve for 10-Year Stroke-Free Survival: Men                            
+
+    The LIFETEST Procedure     
+
+                              N
+--------------------  ---------
+Total                        23
+Event                         5
+Censored                     18
+Median Survival Time  3650.0000
+
+                Product-Limit Survival Estimates                
+
+     Time  Survival  Std Error  Number at Risk  Number of Events
+---------  --------  ---------  --------------  ----------------
+ 974.0000    0.9565     0.0425              23                 1
+1266.0000    0.9130     0.0588              22                 1
+1426.0000    0.8696     0.0702              21                 1
+2426.0000    0.8213     0.0813              18                 1
+3369.0000    0.7626     0.0943              14                 1
+
+                          Kaplan-Meier Survival Curve for 10-Year Stroke-Free Survival: Women                           
+
+    The LIFETEST Procedure     
+
+                              N
+--------------------  ---------
+Total                        22
+Event                         2
+Censored                     20
+Median Survival Time  3650.0000
+
+                Product-Limit Survival Estimates                
+
+     Time  Survival  Std Error  Number at Risk  Number of Events
+---------  --------  ---------  --------------  ----------------
+2886.0000    0.9524     0.0465              21                 1
+3421.0000    0.8929     0.0722              16                 1
+

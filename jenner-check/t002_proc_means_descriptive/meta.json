@@ -1,0 +1,8 @@
+{
+  "bundle": "t002_proc_means_descriptive",
+  "source_file": "Project3/Code/1. Descriptive, PH, and Predictive Analysis.sas",
+  "source_blob_sha": "c22e155e40cd1b3b67e20ce975565e4dbf835d68",
+  "source_commit": "cb88fc43ab5bc7d3297b7835c995156e00c0f84f",
+  "tier": "real_data",
+  "notes": "PROC MEANS baseline descriptives by sex: mean follow-up time, age/sysbp/bmi/totchol summaries, and missingness counts; mock work.frmgham via autoexec."
+}

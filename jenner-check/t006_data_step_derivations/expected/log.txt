@@ -1,0 +1,46 @@
+Jenner 0.1.0 (Unlicensed - limited to 100 observations)
+Get a license at https://jenneranalytics.com/license
+
+NOTE: Option OBS changed to 100.
+NOTE: DATA work.frmgham
+
+NOTE: Processing inline DATALINES (89 lines)
+
+NOTE: Read 89 rows from DATALINES.
+NOTE: Wrote work.frmgham (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC FORMAT library=WORK
+
+NOTE: FORMAT sexfmt defined (2 ranges).
+NOTE: FORMAT periodfmt defined (3 ranges).
+NOTE: FORMAT yesnofmt defined (2 ranges).
+NOTE: DATA work.frmgham
+
+
+NOTE: Read 89 rows from work.frmgham.
+NOTE: Wrote work.frmgham (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA work.baseline
+
+
+NOTE: Read 89 rows from work.frmgham.
+NOTE: Wrote work.baseline (45 rows, 40 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA work.complete_case
+
+
+NOTE: Read 45 rows from work.baseline.
+NOTE: Wrote work.complete_case (45 rows, 40 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: Option TITLE changed to Derived Baseline Analytic Variables (First 10 Participants).
+NOTE: PROC PRINT data=work.complete_case
+
+NOTE: PROC PRINT completed: 10 observations printed, 7 variables

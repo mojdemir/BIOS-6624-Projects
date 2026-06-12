@@ -1,0 +1,40 @@
+Jenner 0.1.0 (Unlicensed - limited to 100 observations)
+Get a license at https://jenneranalytics.com/license
+
+NOTE: Option OBS changed to 100.
+NOTE: DATA work.frmgham
+
+NOTE: Processing inline DATALINES (89 lines)
+
+NOTE: Read 89 rows from DATALINES.
+NOTE: Wrote work.frmgham (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC FORMAT library=WORK
+
+NOTE: FORMAT sexfmt defined (2 ranges).
+NOTE: FORMAT yesnofmt defined (2 ranges).
+NOTE: Option TITLE changed to Number of Participants with Prevalent Stroke at Baseline (Period 1).
+NOTE: PROC FREQ
+NOTE: ODS plot written: freq_prevstrk.spec.json
+NOTE: PROC FREQ statement used.
+NOTE: DATA work.baseline
+
+
+NOTE: Read 89 rows from work.frmgham.
+NOTE: Wrote work.baseline (45 rows, 40 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: Option TITLE changed to Table 1. Outcome: 10-Year Incident Stroke by Sex.
+NOTE: PROC FREQ
+NOTE: ODS plot written: freq_mosaic_sex_stroke10.spec.json
+NOTE: PROC FREQ statement used.
+NOTE: Option TITLE changed to Baseline Risk Factors by Sex.
+NOTE: PROC FREQ
+NOTE: ODS plot written: freq_mosaic_sex_diabetes.spec.json
+NOTE: ODS plot written: freq_mosaic_sex_cursmoke.spec.json
+NOTE: ODS plot written: freq_mosaic_sex_bpmeds.spec.json
+NOTE: ODS plot written: freq_mosaic_sex_prevchd.spec.json
+NOTE: PROC FREQ statement used.

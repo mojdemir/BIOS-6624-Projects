@@ -1,0 +1,18 @@
+{
+  "_captured_at": "2026-06-12T19:41:00.480041+00:00",
+  "_captured_run_id": "r_019ebd58b1ce7b53a95918b7466f01c0",
+  "status": "ok",
+  "exit_code": 0,
+  "log_contains": [
+    "NOTE: Wrote work.trend_all (18 rows, 4 columns).",
+    "NOTE: PROC SGPANEL data=work.trend_all"
+  ],
+  "log_does_not_contain": [
+    "ERROR:",
+    "[JENNER-ERROR"
+  ],
+  "diagnostics": {
+    "parse_warnings": [],
+    "runtime_warnings": []
+  }
+}
