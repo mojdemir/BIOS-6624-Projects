@@ -1,0 +1,18 @@
+                              Derived Baseline Analytic Variables (First 10 Participants)                               
+
+
+  Obs  Unique participant ID    Sex  Age at exam (years)  Systolic blood pressure (mmHg)  Diabetes  Incident stroke within 10 years  Follow-up time truncated at 10 years (days)
+-----  ---------------------  -----  -------------------  ------------------------------  --------  -------------------------------  -------------------------------------------
+    1                   1000    Men                   54                             128       Yes                               No                                         3650
+    2                   1001  Women                   47                             143       Yes                               No                                         3650
+    3                   1002    Men                   58                             126        No                               No                                         3650
+    4                   1003  Women                   70                             143       Yes                               No                                         3650
+    5                   1004    Men                   47                             118       Yes                               No                                         2920
+    6                   1005  Women                   44                             117        No                               No                                         3650
+    7                   1006    Men                   54                             139        No                               No                                         3650
+    8                   1007  Women                   39                             118       Yes                               No                                         3650
+    9                   1008    Men                   63                             110       Yes                               No                                         3650
+   10                   1009  Women                   70                             146        No                               No                                         3220
+
+... 35 more observations (showing 10 of 45)
+

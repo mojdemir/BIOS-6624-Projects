@@ -1,0 +1,8 @@
+{
+  "bundle": "t001_proc_freq_baseline",
+  "source_file": "Project3/Code/1. Descriptive, PH, and Predictive Analysis.sas",
+  "source_blob_sha": "c22e155e40cd1b3b67e20ce975565e4dbf835d68",
+  "source_commit": "cb88fc43ab5bc7d3297b7835c995156e00c0f84f",
+  "tier": "real_data",
+  "notes": "PROC FREQ baseline prevalent-stroke count, sex*stroke10 outcome cross-tab, and sex-by-risk-factor two-way tables; mock work.frmgham built in autoexec in place of the author's PROC IMPORT of frmgham2.xls."
+}

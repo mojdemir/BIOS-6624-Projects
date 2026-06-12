@@ -1,0 +1,53 @@
+Jenner 0.1.0 (Unlicensed - limited to 100 observations)
+Get a license at https://jenneranalytics.com/license
+
+NOTE: Option OBS changed to 100.
+NOTE: DATA work.frmgham
+
+NOTE: Processing inline DATALINES (89 lines)
+
+NOTE: Read 89 rows from DATALINES.
+NOTE: Wrote work.frmgham (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC FORMAT library=WORK
+
+NOTE: FORMAT sexfmt defined (2 ranges).
+NOTE: DATA work.baseline
+
+
+NOTE: Read 89 rows from work.frmgham.
+NOTE: Wrote work.baseline (45 rows, 40 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA work.complete_case
+
+
+NOTE: Read 45 rows from work.baseline.
+NOTE: Wrote work.complete_case (45 rows, 40 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: ODS Graphics is ON (width=640px, height=480px, format=SVG).
+NOTE: ODS Graphics settings reset to defaults.
+NOTE: ODS Graphics image-name index reset.
+NOTE: ODS Graphics is ON (width=8in, height=6in, format=PNG).
+NOTE: Option TITLE changed to Kaplan-Meier Survival Curve for 10-Year Stroke-Free Survival: Men.
+NOTE: PROC LIFETEST data=work.complete_case
+
+NOTE: Using Python lifelines version 0.30.3
+NOTE: ODS plot written: lifetest_survival.spec.json
+NOTE: ODS plot written: km_stroke_men.spec.json
+NOTE: PROC LIFETEST completed.
+NOTE: ODS Graphics settings reset to defaults.
+NOTE: ODS Graphics image-name index reset.
+NOTE: ODS Graphics is ON (width=8in, height=6in, format=PNG).
+NOTE: Option TITLE changed to Kaplan-Meier Survival Curve for 10-Year Stroke-Free Survival: Women.
+NOTE: PROC LIFETEST data=work.complete_case
+
+NOTE: Using Python lifelines version 0.30.3
+NOTE: ODS plot written: lifetest_survival.spec.json
+NOTE: ODS plot written: km_stroke_women.spec.json
+NOTE: PROC LIFETEST completed.

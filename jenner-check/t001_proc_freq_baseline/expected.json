@@ -1,0 +1,18 @@
+{
+  "_captured_at": "2026-06-12T19:41:00.480041+00:00",
+  "_captured_run_id": "r_019ebd587c307890a9b2ee27afb96512",
+  "status": "ok",
+  "exit_code": 0,
+  "log_contains": [
+    "NOTE: Wrote work.baseline (45 rows, 40 columns).",
+    "NOTE: PROC FREQ"
+  ],
+  "log_does_not_contain": [
+    "ERROR:",
+    "[JENNER-ERROR"
+  ],
+  "diagnostics": {
+    "parse_warnings": [],
+    "runtime_warnings": []
+  }
+}

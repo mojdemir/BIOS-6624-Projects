@@ -1,0 +1,33 @@
+                             Cox PH Model for 10-Year Incident Stroke: Age and Systolic BP                              
+
+        The PHREG Procedure        
+
+Criterion                     Value
+----------------------  -----------
+Number of Observations           45
+Number of Events                  7
+-2 LOG L                     44.398
+Convergence Status      0 Converged
+
+      Testing Global Null Hypothesis: BETA=0      
+
+Test              Chi-Square        DF  Pr > ChiSq
+----------------  ----------  --------  ----------
+Likelihood Ratio      6.4028         2      0.0407
+Wald                  4.6424         2      0.0982
+Score (Log-Rank)      5.8645         2      0.0533
+
+                                   Analysis of Maximum Likelihood Estimates                                    
+
+Parameter        DF  Estimate  Standard Error  Chi-Square  Pr > ChiSq  Hazard Ratio  95% Lower CL  95% Upper CL
+---------  --------  --------  --------------  ----------  ----------  ------------  ------------  ------------
+AGE               1   0.10901         0.05592      3.8000      0.0513         1.115         0.999         1.244
+SYSBP             1   0.00030         0.03588      0.0001      0.9932         1.000         0.932         1.073
+
+                    Hazard Ratios                    
+
+Description  Hazard Ratio  95% Lower CL  95% Upper CL
+-----------  ------------  ------------  ------------
+age                 1.115         0.999         1.244
+sysbp               1.000         0.932         1.073
+

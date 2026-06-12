@@ -1,0 +1,89 @@
+Jenner 0.1.0 (Unlicensed - limited to 100 observations)
+Get a license at https://jenneranalytics.com/license
+
+NOTE: Option OBS changed to 100.
+NOTE: DATA work.frmgham
+
+NOTE: Processing inline DATALINES (89 lines)
+
+NOTE: Read 89 rows from DATALINES.
+NOTE: Wrote work.frmgham (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC FORMAT library=WORK
+
+NOTE: FORMAT sexfmt defined (2 ranges).
+NOTE: DATA work.long_desc
+
+
+NOTE: Read 89 rows from work.frmgham.
+NOTE: Wrote work.long_desc (89 rows, 38 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC MEANS
+NOTE: Output dataset work.bp_mean has 12 observations and 3 variables.
+NOTE: PROC MEANS statement used.
+NOTE: PROC SORT data=work.long_desc
+
+NOTE: Unlicensed mode - input limited to 100 observations.
+NOTE: Read 89 rows from work.long_desc.
+NOTE: Wrote work.long_desc_sorted (89 rows, 38 columns).
+NOTE: PROC SORT statement used.
+NOTE: PROC FREQ
+NOTE: Output dataset work.diab_prev has 12 observations and 5 variables.
+NOTE: PROC FREQ statement used.
+NOTE: DATA work.diab_prev_plot
+
+
+NOTE: Read 12 rows from work.diab_prev.
+NOTE: Wrote work.diab_prev_plot (6 rows, 4 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: PROC FREQ
+NOTE: Output dataset work.smok_prev has 12 observations and 5 variables.
+NOTE: PROC FREQ statement used.
+NOTE: DATA work.smok_prev_plot
+
+
+NOTE: Read 12 rows from work.smok_prev.
+NOTE: Wrote work.smok_prev_plot (6 rows, 4 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA work.bp_mean_plot
+
+
+NOTE: Read 12 rows from work.bp_mean.
+NOTE: Wrote work.bp_mean_plot (6 rows, 4 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: DATA work.trend_all
+
+
+NOTE: Read 6 rows from work.bp_mean_plot.
+NOTE: Read 12 rows from work.diab_prev_plot.
+NOTE: Read 18 rows from work.smok_prev_plot.
+NOTE: Wrote work.trend_all (18 rows, 4 columns).
+NOTE: DATA elapsed:
+  wall  0.00 seconds
+  cpu   0.00 seconds
+NOTE: Option TITLE changed to Mean Systolic Blood Pressure by Exam Period and Sex.
+NOTE: PROC PRINT data=work.bp_mean_plot
+
+NOTE: PROC PRINT completed: 6 observations printed, 4 variables
+NOTE: Option TITLE changed to Diabetes Prevalence by Exam Period and Sex.
+NOTE: PROC PRINT data=work.diab_prev_plot
+
+NOTE: PROC PRINT completed: 6 observations printed, 4 variables
+NOTE: ODS Graphics is ON (width=640px, height=480px, format=SVG).
+NOTE: ODS Graphics settings reset to defaults.
+NOTE: ODS Graphics image-name index reset.
+NOTE: ODS Graphics is ON (width=11in, height=4.5in, format=PNG).
+NOTE: Option TITLE changed to Figure 2. Trends in Systolic Blood Pressure, Diabetes Prevalence, and Smoking by Sex Across Examination Periods 1-3.
+NOTE: PROC SGPANEL data=work.trend_all
+
+NOTE: PROC SGPANEL output written to: ./ods_output/Figure2_Changes_Risk_Factors.png
